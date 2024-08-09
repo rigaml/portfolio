@@ -10,4 +10,6 @@ def get_total(request, broker: str):
     return render(request, 'profit_total.html', {'broker': broker, 'date_start': date_start, 'date_end': date_end})
 
 def get_details(request, broker: str):
-    return HttpResponse('get_details')
+    date_start = request.GET.get('date_start')
+    date_end = request.GET.get('date_end')
+    return render(request, 'profit_details.html', {'broker': broker, 'date_start': date_start, 'date_end': date_end})
