@@ -4,9 +4,10 @@ from django.urls import reverse
 
 django.setup()
 
-class GetDetailsViewTest(TestCase): 
 
-    BROKER= 'ING'
+class TestGetDetailsView(TestCase):
+
+    BROKER = 'ING'
     DATE_START = '2023-01-01'
     DATE_END = '2023-12-31'
 
@@ -26,4 +27,5 @@ class GetDetailsViewTest(TestCase):
         response = self.client.get(url, querystring)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertEqual(response['Content-Disposition'], f'attachment; filename="{self.DATE_START}-{self.DATE_END}-{self.BROKER}-profits-details.csv"')
+        self.assertEqual(response['Content-Disposition'],
+                         f'attachment; filename="{self.DATE_START}-{self.DATE_END}-{self.BROKER}-profits-details.csv"')

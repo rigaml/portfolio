@@ -4,9 +4,10 @@ from django.urls import reverse
 
 django.setup()
 
-class GetTotalViewTest(TestCase): 
 
-    BROKER= 'ING'
+class TestGetTotalView(TestCase):
+
+    BROKER = 'ING'
     DATE_START = '2023-01-01'
     DATE_END = '2023-12-31'
     TOTAL = 10000
@@ -16,8 +17,10 @@ class GetTotalViewTest(TestCase):
 
     def tearDown(self):
         pass
-    
+
     def test_get_total_given_valid_params_return_json(self):
+        """
+        """
         url = reverse('get_total', kwargs={'broker': self.BROKER})
         querystring = {
             'date_start': self.DATE_START,
