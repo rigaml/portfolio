@@ -2,8 +2,6 @@ import django
 from django.test import TestCase, Client
 from django.urls import reverse
 
-django.setup()
-
 
 class TestGetDetailsView(TestCase):
 
@@ -25,6 +23,7 @@ class TestGetDetailsView(TestCase):
         }
 
         response = self.client.get(url, querystring)
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertEqual(response['Content-Disposition'],

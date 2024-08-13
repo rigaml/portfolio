@@ -2,10 +2,8 @@ import django
 from django.test import TestCase, Client
 from django.urls import reverse
 
-django.setup()
 
-
-class TestGetTotalView(TestCase):
+class TestGetTotalsView(TestCase):
 
     BROKER = 'ING'
     DATE_START = '2023-01-01'
@@ -18,10 +16,10 @@ class TestGetTotalView(TestCase):
     def tearDown(self):
         pass
 
-    def test_get_total_given_valid_params_return_json(self):
+    def test_get_totals_given_valid_params_return_json(self):
         """
         """
-        url = reverse('get_total', kwargs={'broker': self.BROKER})
+        url = reverse('get_totals', kwargs={'broker': self.BROKER})
         querystring = {
             'date_start': self.DATE_START,
             'date_end': self.DATE_END,

@@ -1,33 +1,67 @@
-from django.http import HttpResponse, JsonResponse
+import re
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 import csv
 
-def get_total(request, broker: str):
-    """    
-    http://127.0.0.1:8000/profits/total/ING?date_start=2023-01-01&date_end=2023-12-31
+from profits.models import Broker, Currency, CurrencyExchange, Operation
+from profits.serializer import BrokerSerializer, CurrencyExchangeSerializer, CurrencySerializer, DividendSerializer, OperationSerializer, SplitSerializer
+
+
+@api_view()
+def broker_list(request):
+    brokers = Broker.objects.all()
+    serializer = BrokerSerializer(brokers, many=True)
+    return Response(serializer.data)
+
+@api_view()
+def currency_list(request):
+    currencies = Currency.objects.all()
+    serializer = CurrencySerializer(currencies, many=True)
+    return Response(serializer.data)
+
+
+@api_view()
+def operation_list(request, broker_short_name: str):
+    """
+    http://127.0.0.1:8000/profits/operations/ING
+    """
+    broker = get_object_or_404(Broker, short_name=broker_short_name)
+    operations = Operation.objects.filter(pk=broker.id).all()
+    serializer = OperationSerializer(operations, many=True)
+    return Response(serializer.data)
+
+@api_view()
+def get_totals(request, broker_short_name: str):
+    """
+    http://127.0.0.1:8000/profits/brokers/ING/totals?date_start=2023-01-01&date_end=2023-12-31
+ 
     """
     date_start = request.GET.get('date_start')
     date_end = request.GET.get('date_end')
     data = {
         'date_start': date_start,
         'date_end': date_end,
-        'broker': broker,
+        'broker': broker_short_name,
         'total': 10000
     }
-    return JsonResponse(data)
+    return Response(data)
 
-def get_details(request, broker: str):
+@api_view()
+def get_details(request, broker_short_name: str):
     """
-    http://127.0.0.1:8000/profits/details/ING?date_start=2022-01-01&date_end=2024-12-31
+    http://127.0.0.1:8000/profits/brokers/ING/details?date_start=2022-01-01&date_end=2024-12-31
     """
     date_start = request.GET.get('date_start')
     date_end = request.GET.get('date_end')
-    
+
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="{date_start}-{date_end}-{broker}-profits-details.csv"'
+    response['Content-Disposition'] = f'attachment; filename="{date_start}-{date_end}-{broker_short_name}-profits-details.csv"'
 
     # Create a CSV writer using the response as the "file"
     writer = csv.writer(response)
-    
+
     # Write the header (optional)
     writer.writerow(['Ticker', 'Quantity', 'Currency', 'Buy Date', 'Buy Amount', 'Sell Date', 'SellAmount', 'Profit'])
 
@@ -37,8 +71,38 @@ def get_details(request, broker: str):
         ['TSLA', '100', 'USD', '2023-02-01', '100', '2024-02-02', '2000', '1900'],
         ['NVDA', '1000', 'USD', '2022-03-01', '100', '2024-02-03', '20000', '19900'],
     ]
-    
+
     for row in data:
         writer.writerow(row)
 
     return response
+
+
+@api_view(['GET', 'POST'])
+def currency_exchange_list(request, origin: str, target: str):
+    if request.method == 'GET':
+        return Response()
+    elif request.method == 'POST':
+        serializer = CurrencyExchangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response('ok')
+
+
+@api_view(['GET', 'POST'])
+def split_list(request):
+    if request.method == 'GET':
+        return Response()
+    elif request.method == 'POST':
+        serializer = SplitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response('ok')
+
+
+@api_view(['GET', 'POST'])
+def dividend_list(request):
+    if request.method == 'GET':
+        return Response()
+    elif request.method == 'POST':
+        serializer = DividendSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response('ok')

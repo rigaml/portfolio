@@ -26,6 +26,7 @@ SECRET_KEY = 'django-insecure-&!2a^)8p7i#5*422cvyo5$vwk91)_wy&ri&%+q23oe_^#m899p
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    '127.0.0.1',
     'testserver'
 ]
 
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'debug_toolbar',
+    'rest_framework',
     'profits',
 ]
 

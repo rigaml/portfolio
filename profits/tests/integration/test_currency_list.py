@@ -1,0 +1,37 @@
+import django
+from django.test import TestCase, Client
+from django.urls import reverse
+from unittest.mock import patch, MagicMock
+
+from profits.models import Currency
+from profits.serializer import CurrencySerializer
+
+
+class TestCurrencyList(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+
+    def tearDown(self):
+        pass
+
+    @patch('profits.views.Currency.objects.all')
+    def test_currency_list_given_get_request_returns_currencies(self, mock_currency_all):
+        """
+        Tests get list currencies
+        """
+        mock_currency_1 = MagicMock(spec=Currency)
+        mock_currency_1.id = 1
+        mock_currency_1.iso_code = "USD"
+        mock_currency_1.description = "USD"
+        mock_currency_1.created = "2024-08-08"
+
+        mock_currency_all.return_value = [mock_currency_1]
+
+        url = reverse('currency_list')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        expected_data = CurrencySerializer([mock_currency_1], many=True).data
+        self.assertEqual(response.json(), expected_data)
