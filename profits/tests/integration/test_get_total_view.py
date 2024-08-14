@@ -19,7 +19,7 @@ class TestGetTotalsView(TestCase):
     def test_get_totals_given_valid_params_return_json(self):
         """
         """
-        url = reverse('get_totals', kwargs={'broker': self.BROKER})
+        url = reverse('get_totals', kwargs={'broker_short_name': self.BROKER})
         querystring = {
             'date_start': self.DATE_START,
             'date_end': self.DATE_END,

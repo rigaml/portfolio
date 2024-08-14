@@ -3,34 +3,20 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 import csv
 
-from profits.models import Broker, Currency, CurrencyExchange, Operation
+from profits.models import Broker, Currency, CurrencyExchange, Dividend, Operation, Split
 from profits.serializer import BrokerSerializer, CurrencyExchangeSerializer, CurrencySerializer, DividendSerializer, OperationSerializer, SplitSerializer
 
-
-@api_view()
-def broker_list(request):
-    brokers = Broker.objects.all()
-    serializer = BrokerSerializer(brokers, many=True)
-    return Response(serializer.data)
-
-@api_view()
-def currency_list(request):
-    currencies = Currency.objects.all()
-    serializer = CurrencySerializer(currencies, many=True)
-    return Response(serializer.data)
+from rest_framework.generics import ListCreateAPIView
 
 
-@api_view()
-def operation_list(request, broker_short_name: str):
-    """
-    http://127.0.0.1:8000/profits/operations/ING
-    """
-    broker = get_object_or_404(Broker, short_name=broker_short_name)
-    operations = Operation.objects.filter(pk=broker.id).all()
-    serializer = OperationSerializer(operations, many=True)
-    return Response(serializer.data)
+class BrokerList(APIView):
+    def get(self, request):
+        brokers = Broker.objects.all()
+        serializer = BrokerSerializer(brokers, many=True)
+        return Response(serializer.data)
 
 @api_view()
 def get_totals(request, broker_short_name: str):
@@ -77,32 +63,63 @@ def get_details(request, broker_short_name: str):
 
     return response
 
+class CurrencyList(APIView):
+    def get(self, request):
+        currencies = Currency.objects.all()
+        serializer = CurrencySerializer(currencies, many=True)
+        return Response(serializer.data)
 
-@api_view(['GET', 'POST'])
-def currency_exchange_list(request, origin: str, target: str):
-    if request.method == 'GET':
-        return Response()
-    elif request.method == 'POST':
+
+class OperationList(APIView):
+    def get(self, request, broker_short_name: str):
+        """
+        http://127.0.0.1:8000/profits/operations/ING
+
+        """
+        broker = get_object_or_404(Broker, short_name=broker_short_name)
+        operations = Operation.objects.filter(pk=broker.id)
+
+        serializer = OperationSerializer(operations.all(), many=True)
+        return Response(serializer.data)
+    
+    def post(self, request, broker_short_name: str):
+        broker = get_object_or_404(Broker, short_name=broker_short_name)
+        ## TODO: Should use the brokerId retrieved???
+        serializer = OperationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response('ok')
+
+class CurrencyExchangeList(APIView):
+    def get(self, request, origin: str, target: str):
+        currency_exchange = CurrencyExchange.objects.all()
+        serializer = CurrencyExchangeSerializer(currency_exchange, many=True)
+        return Response(serializer.data)
+   
+    def post(self, request, origin: str, target: str):
         serializer = CurrencyExchangeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response('ok')
 
 
-@api_view(['GET', 'POST'])
-def split_list(request):
-    if request.method == 'GET':
-        return Response()
-    elif request.method == 'POST':
+class SplitList(APIView):
+    def get(self, request):
+        split = Split.objects.all()
+        serializer = SplitSerializer(split, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
         serializer = SplitSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response('ok')
 
 
-@api_view(['GET', 'POST'])
-def dividend_list(request):
-    if request.method == 'GET':
-        return Response()
-    elif request.method == 'POST':
+class DividendList(APIView):
+    def get(self, request):
+        dividend = Dividend.objects.all()
+        serializer = DividendSerializer(dividend, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
         serializer = DividendSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response('ok')

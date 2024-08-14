@@ -16,7 +16,7 @@ class TestGetDetailsView(TestCase):
         pass
 
     def test_get_details_given_valid_params_return_json(self):
-        url = reverse('get_details', kwargs={'broker': self.BROKER})
+        url = reverse('get_details', kwargs={'broker_short_name': self.BROKER})
         querystring = {
             'date_start': self.DATE_START,
             'date_end': self.DATE_END,

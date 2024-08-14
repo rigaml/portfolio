@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from profits.models import Broker, Currency, CurrencyExchange, Operation
+from profits.models import Broker, Currency, CurrencyExchange, Dividend, Operation, Split
 
 
 class BrokerSerializer(serializers.ModelSerializer):
@@ -26,10 +26,10 @@ class CurrencyExchangeSerializer(serializers.ModelSerializer):
 
 class SplitSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CurrencyExchange
-        fields = ['date', 'origin', 'target', 'rate', 'created']
+        model = Split
+        fields = ['date', 'ticker', 'origin', 'target', 'created']
 
 class DividendSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CurrencyExchange
-        fields = ['date', 'origin', 'target', 'rate', 'created']
+        model = Dividend
+        fields = ['date', 'ticker', 'currency', 'amount_total', 'created']
