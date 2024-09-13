@@ -23,9 +23,9 @@ class TestDividendList(TestCase):
             id = 4,
             date = "2024-08-08",
             ticker = "DNA",
-            currency = Currency(iso_code="USD", description="USD", created="2024-08-08"),
+            currency = Currency(iso_code="USD", description="USD", created_at="2024-08-08"),
             amount_total = 1234.23,
-            created = "2024-08-08")
+            created_at = "2024-08-08")
 
         mock_dividend_all.return_value = [mock_dividend_1]
 

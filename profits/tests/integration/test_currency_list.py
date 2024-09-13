@@ -24,7 +24,7 @@ class TestCurrencyList(TestCase):
             id = 3,
             iso_code = "USD",
             description = "USD",
-            created = "2024-08-08")
+            created_at = "2024-08-08")
 
         mock_currency_all.return_value = [mock_currency_1]
 

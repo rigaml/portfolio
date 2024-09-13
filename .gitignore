@@ -1,3 +1,7 @@
+# PORTFOLIO: PROJECT SPECIFIC
+portfolio.sqlite3
+portfolio.sqlite3-journal
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

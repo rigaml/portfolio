@@ -22,9 +22,9 @@ class TestBrokerList(TestCase):
         """
         mock_broker_1 = Broker(
             id = 2,
-            short_name = "ING",
             name = "ING",
-            created = "2024-08-08")
+            full_name = "ING",
+            created_at = "2024-08-08")
 
         mock_broker_all.return_value = [mock_broker_1]
 

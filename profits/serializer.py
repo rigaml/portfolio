@@ -6,30 +6,30 @@ from profits.models import Broker, Currency, CurrencyExchange, Dividend, Operati
 class BrokerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Broker
-        fields = ['short_name', 'name', 'created']
+        fields = ['name', 'full_name', 'created_at']
 
 
 class CurrencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Currency
-        fields = ['iso_code', 'description', 'created']
+        fields = ['iso_code', 'description', 'created_at']
 
 class OperationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Operation
-        fields = ['date', 'broker', 'currency', 'type', 'quantity', 'ticker', 'amount_total', 'created']
+        fields = ['date', 'broker', 'type', 'ticker', 'quantity', 'currency', 'amount_total', 'created_at']
 
 class CurrencyExchangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyExchange
-        fields = ['date', 'origin', 'target', 'rate', 'created']
+        fields = ['date', 'origin', 'target', 'rate', 'created_at']
 
 class SplitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Split
-        fields = ['date', 'ticker', 'origin', 'target', 'created']
+        fields = ['date', 'ticker', 'origin', 'target', 'created_at']
 
 class DividendSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dividend
-        fields = ['date', 'ticker', 'currency', 'amount_total', 'created']
+        fields = ['date', 'ticker', 'currency', 'amount_total', 'created_at']

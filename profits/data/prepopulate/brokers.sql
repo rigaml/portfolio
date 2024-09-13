@@ -1,31 +1,31 @@
-INSERT INTO "profits_broker" ("short_name", "name", "created")
+INSERT INTO "profits_broker" ("name", "full_name", "created_at")
 SELECT 'ING', 'ING', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "short_name" = 'ING');
+WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "name" = 'ING');
 
-INSERT INTO "profits_broker" ("short_name", "name", "created")
-SELECT 'HAL_T', 'HAL_T', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "short_name" = 'HAL_T');
+INSERT INTO "profits_broker" ("name", "full_name", "created_at")
+SELECT 'HAL_T', 'HAL_Trading', CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "name" = 'HAL_T');
 
-INSERT INTO "profits_broker" ("short_name", "name", "created")
-SELECT 'HAL_I', 'HAL_I', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "short_name" = 'HAL_I');
+INSERT INTO "profits_broker" ("name", "full_name", "created_at")
+SELECT 'HAL_I', 'HAL_ISA', CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "name" = 'HAL_ISA');
 
-INSERT INTO "profits_broker" ("short_name", "name", "created")
-SELECT 'II_R', 'II_R', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "short_name" = 'II_R');
+INSERT INTO "profits_broker" ("name", "full_name", "created_at")
+SELECT 'II_T', 'II_Trading', CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "name" = 'II_T');
 
-INSERT INTO "profits_broker" ("short_name", "name", "created")
-SELECT 'II_So', 'II_So', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "short_name" = 'II_So');
+INSERT INTO "profits_broker" ("name", "full_name", "created_at")
+SELECT 'II_So', 'II_Sofia', CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "name" = 'II_So');
 
-INSERT INTO "profits_broker" ("short_name", "name", "created")
-SELECT 'II_Sa', 'II_Sa', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "short_name" = 'II_Sa');
+INSERT INTO "profits_broker" ("name", "full_name", "created_at")
+SELECT 'II_Sa', 'II_Sara', CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "name" = 'II_Sa');
 
-INSERT INTO "profits_broker" ("short_name", "name", "created")
-SELECT 'T_T', 'T_T', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "short_name" = 'T_T');
+INSERT INTO "profits_broker" ("name", "full_name", "created_at")
+SELECT 'T212_T', 'T212_Trading', CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "name" = 'T212_T');
 
-INSERT INTO "profits_broker" ("short_name", "name", "created")
-SELECT 'T_I', 'T_I', CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "short_name" = 'T_I');
+INSERT INTO "profits_broker" ("name", "full_name", "created_at")
+SELECT 'T212_ISA', 'T212_ISA', CURRENT_TIMESTAMP
+WHERE NOT EXISTS (SELECT 1 FROM "profits_broker" WHERE "name" = 'T212_ISA');

@@ -25,7 +25,7 @@ class TestSplitList(TestCase):
             date = "2024-08-08",
             origin = 1,
             target= 10,
-            created = "2024-08-08")
+            created_at = "2024-08-08")
 
         mock_split_all.return_value = [mock_split_1]
 

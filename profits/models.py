@@ -1,16 +1,16 @@
 from django.db import models
 
 class Broker(models.Model):
-    short_name = models.CharField(max_length=5, unique=True)
-    name= models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=10, unique=True)
+    full_name= models.CharField(max_length=255, unique=True)
 
-    created = models.DateTimeField(auto_now_add=True)
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class Currency(models.Model):
     iso_code = models.CharField(max_length=3, unique=True)
     description = models.CharField(max_length=255, unique=True)
 
-    created = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     
 class Operation(models.Model):
     TYPE_CHOICES = [
@@ -21,16 +21,17 @@ class Operation(models.Model):
     
     date = models.DateTimeField()
     broker = models.ForeignKey(Broker, on_delete=models.PROTECT)
-    currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     type = models.CharField(max_length=4, choices=TYPE_CHOICES)
+    ticker = models.CharField(max_length=10)
+    exchange = models.CharField(max_length=10)
     quantity = models.DecimalField(max_digits=15, decimal_places=7) #Fractional shares require decimal_places
-    ticker = models.CharField(max_length=5)
+    currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     amount_total = models.DecimalField(max_digits=17, decimal_places=7)
 
-    created = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('date', 'broker')    
+        unique_together = ('date', 'broker', 'ticker', 'exchange')
 
 
 class CurrencyExchange(models.Model):
@@ -39,10 +40,10 @@ class CurrencyExchange(models.Model):
     target = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name='target_currencyexchange')
     rate = models.DecimalField(max_digits=10, decimal_places=6)
 
-    created = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('date', 'origin', 'target')    
+        unique_together = ('date', 'origin', 'target')
 
 class Split(models.Model):
     date = models.DateTimeField()
@@ -50,7 +51,7 @@ class Split(models.Model):
     origin = models.DecimalField(max_digits=5, decimal_places=2)
     target = models.DecimalField(max_digits=5, decimal_places=2)
 
-    created = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('date', 'ticker')
@@ -61,7 +62,7 @@ class Dividend(models.Model):
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     amount_total = models.DecimalField(max_digits=17, decimal_places=7)
 
-    created = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('date', 'ticker')

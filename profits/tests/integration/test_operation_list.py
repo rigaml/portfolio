@@ -22,19 +22,20 @@ class TestOperationList(TestCase):
         Tests get list operations
         """
 
-        mock_broker= Broker(id=2, short_name="ING", name="ING", created="2024-08-08")
+        mock_broker= Broker(id=2, name="ING", full_name="ING", created_at="2024-08-08")
         mock_get_object_or_404.return_value = mock_broker
 
         mock_operation_1 = Operation(
             id = 15,
             date = "2024-08-08",
             broker = mock_broker,
-            currency = Currency(id=3, iso_code="USD", description="USD", created="2024-08-08"),
             type="BUY",
+            ticker= "TSLA",
+            exchange= "NASDAQ",
             quantity= 100,
-            ticker= "DNA",
+            currency = Currency(id=3, iso_code="USD", description="USD", created_at="2024-08-08"),
             amount_total = 1234.23,
-            created = "2024-08-08"
+            created_at = "2024-08-08"
         )
 
         mock_queryset = MagicMock()
@@ -42,7 +43,7 @@ class TestOperationList(TestCase):
 
         mock_operation_filter.return_value = mock_queryset
 
-        url = reverse('operation_list', kwargs={'broker_short_name': "ING"})
+        url = reverse('operation_list', kwargs={'broker_name': "ING"})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)

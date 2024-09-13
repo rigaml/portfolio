@@ -9,7 +9,8 @@ import csv
 from profits.models import Broker, Currency, CurrencyExchange, Dividend, Operation, Split
 from profits.serializer import BrokerSerializer, CurrencyExchangeSerializer, CurrencySerializer, DividendSerializer, OperationSerializer, SplitSerializer
 
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
+from rest_framework.viewsets import ModelViewSet
 
 
 class BrokerList(APIView):
@@ -19,7 +20,7 @@ class BrokerList(APIView):
         return Response(serializer.data)
 
 @api_view()
-def get_totals(request, broker_short_name: str):
+def get_totals(request, broker_name: str):
     """
     http://127.0.0.1:8000/profits/brokers/ING/totals?date_start=2023-01-01&date_end=2023-12-31
  
@@ -29,13 +30,13 @@ def get_totals(request, broker_short_name: str):
     data = {
         'date_start': date_start,
         'date_end': date_end,
-        'broker': broker_short_name,
-        'total': 10000
+        'broker': broker_name,
+        'amount_total': 10000
     }
     return Response(data)
 
 @api_view()
-def get_details(request, broker_short_name: str):
+def get_details(request, broker_name: str):
     """
     http://127.0.0.1:8000/profits/brokers/ING/details?date_start=2022-01-01&date_end=2024-12-31
     """
@@ -43,13 +44,13 @@ def get_details(request, broker_short_name: str):
     date_end = request.GET.get('date_end')
 
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="{date_start}-{date_end}-{broker_short_name}-profits-details.csv"'
+    response['Content-Disposition'] = f'attachment; filename="{date_start}-{date_end}-{broker_name}-profits-details.csv"'
 
     # Create a CSV writer using the response as the "file"
     writer = csv.writer(response)
 
     # Write the header (optional)
-    writer.writerow(['Ticker', 'Quantity', 'Currency', 'Buy Date', 'Buy Amount', 'Sell Date', 'SellAmount', 'Profit'])
+    writer.writerow(['Ticker', 'Quantity', 'Currency', 'Buy Date', 'Buy Amount', 'Sell Date', 'Sell Amount', 'Profit'])
 
     # Write data rows
     data = [
@@ -71,19 +72,19 @@ class CurrencyList(APIView):
 
 
 class OperationList(APIView):
-    def get(self, request, broker_short_name: str):
+    def get(self, request, broker_name: str):
         """
         http://127.0.0.1:8000/profits/operations/ING
 
         """
-        broker = get_object_or_404(Broker, short_name=broker_short_name)
+        broker = get_object_or_404(Broker, name=broker_name)
         operations = Operation.objects.filter(pk=broker.id)
 
         serializer = OperationSerializer(operations.all(), many=True)
         return Response(serializer.data)
     
-    def post(self, request, broker_short_name: str):
-        broker = get_object_or_404(Broker, short_name=broker_short_name)
+    def post(self, request, broker_name: str):
+        broker = get_object_or_404(Broker, name=broker_name)
         ## TODO: Should use the brokerId retrieved???
         serializer = OperationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

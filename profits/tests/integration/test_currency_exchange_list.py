@@ -22,10 +22,10 @@ class TestCurrencyExchangeList(TestCase):
         mock_currency_1 = CurrencyExchange(
             id = 35,
             date = "2024-08-08",
-            origin = Currency(id=3, iso_code="USD", description="USD", created="2024-08-08"),
-            target = Currency(id=4, iso_code="GBP", description="GBP", created="2024-08-08"),
+            origin = Currency(id=3, iso_code="USD", description="USD", created_at="2024-08-08"),
+            target = Currency(id=4, iso_code="GBP", description="GBP", created_at="2024-08-08"),
             rate = 0.75,
-            created = "2024-08-08")
+            created_at = "2024-08-08")
 
         mock_currency_exchange_all.return_value = [mock_currency_1]
 
