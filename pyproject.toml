@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "portfolio"
+version = "0.1.0"
+description = "Django project to manage stocks portfolio accounting."
+authors = ["rigaml <r.gmencia@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^5.1.2"
+djangorestframework = "^3.15.2"
+psycopg2-binary = "^2.9.10"
+sqlalchemy = "^2.0.36"
+
+
+[tool.poetry.group.dev.dependencies]
+django-debug-toolbar = "^4.4.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
