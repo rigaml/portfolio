@@ -1,4 +1,5 @@
-import re
+from datetime import datetime
+from io import StringIO
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
@@ -7,11 +8,15 @@ from rest_framework.views import APIView
 import csv
 
 from profits.models import Broker, Currency, CurrencyExchange, Dividend, Operation, Split
-from profits.serializer import BrokerSerializer, CurrencyExchangeSerializer, CurrencySerializer, DividendSerializer, OperationSerializer, SplitSerializer
+from profits.permissions import IsAdminOrReadOnly
+from profits.serializers import BrokerSerializer, CurrencyExchangeSerializer, CurrencySerializer, DividendSerializer, OperationSerializer, SplitSerializer
 
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 
+from django.db import transaction
 
 class BrokerList(APIView):
     def get(self, request):
@@ -64,13 +69,125 @@ def get_details(request, broker_name: str):
 
     return response
 
-class CurrencyList(APIView):
+class CurrencyView(APIView):
     def get(self, request):
         currencies = Currency.objects.all()
         serializer = CurrencySerializer(currencies, many=True)
         return Response(serializer.data)
 
+class CurrencyExchangeView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
 
+    def get(self, request):
+        origin_code = request.query_params.get('origin')
+        target_code = request.query_params.get('target')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if not all([origin_code, target_code, start_date, end_date]):
+            return Response({
+                'error': 'Missing required parameters'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            origin = get_object_or_404(Currency, iso_code=origin_code)
+            target = get_object_or_404(Currency, iso_code=target_code)
+            
+            exchanges = CurrencyExchange.objects.filter(
+                origin=origin,
+                target=target,
+                date__range=[start_date, end_date]
+            ).order_by('-date')
+
+            serializer = CurrencyExchangeSerializer(exchanges, many=True)
+            return Response(serializer.data)
+
+        except Currency.DoesNotExist:
+            return Response({
+                'error': 'Currency not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    def post(self, request):
+        if 'file' not in request.FILES:
+            return Response({
+                'error': 'No file provided'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        origin_code = request.data.get('origin')
+        target_code = request.data.get('target')
+
+        if not all([origin_code, target_code]):
+            return Response({
+                'error': 'Origin and target currencies are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            origin = get_object_or_404(Currency, iso_code=origin_code)
+            target = get_object_or_404(Currency, iso_code=target_code)
+
+            csv_file = request.FILES['file'].read().decode('utf-8')
+            csv_data = csv.DictReader(StringIO(csv_file))
+
+            exchanges = []
+            for row in csv_data:
+                date = datetime.strptime(row['Date'], '%d %b %y')
+                rate = float(row['ExchangeRate'])
+                
+                exchange = CurrencyExchange(
+                    date=date,
+                    origin=origin,
+                    target=target,
+                    rate=rate
+                )
+                exchanges.append(exchange)
+
+            with transaction.atomic():
+                # Delete existing exchanges for this currency pair
+                CurrencyExchange.objects.filter(
+                    origin=origin,
+                    target=target,
+                    date__in=[exchange.date for exchange in exchanges]
+                ).delete()
+                
+                # Create new exchanges
+                CurrencyExchange.objects.bulk_create(exchanges)
+
+            return Response({
+                'message': f'Successfully imported {len(exchanges)} exchange rates'
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)        
+
+    def delete(self, request):
+        origin_code = request.query_params.get('origin')
+        target_code = request.query_params.get('target')
+
+        if not all([origin_code, target_code]):
+            return Response({
+                'error': 'Origin and target currencies are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            origin = get_object_or_404(Currency, iso_code=origin_code)
+            target = get_object_or_404(Currency, iso_code=target_code)
+
+            deleted_count, _ = CurrencyExchange.objects.filter(
+                origin=origin,
+                target=target
+            ).delete()
+
+            return Response({
+                'message': f'Successfully deleted {deleted_count} exchange rates'
+            })
+
+        except Currency.DoesNotExist:
+            return Response({
+                'error': 'Currency not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
 class OperationList(APIView):
     def get(self, request, broker_name: str):
         """

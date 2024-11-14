@@ -1,10 +1,9 @@
-import django
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest.mock import patch
 
 from profits.models import Currency, CurrencyExchange
-from profits.serializer import CurrencyExchangeSerializer
+from profits.serializers import CurrencyExchangeSerializer
 
 class TestCurrencyExchangeList(TestCase):
 

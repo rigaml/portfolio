@@ -22,7 +22,7 @@ class OperationSerializer(serializers.ModelSerializer):
 class CurrencyExchangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyExchange
-        fields = ['date', 'origin', 'target', 'rate', 'created_at']
+        fields = ['date', 'rate']
 
 class SplitSerializer(serializers.ModelSerializer):
     class Meta:

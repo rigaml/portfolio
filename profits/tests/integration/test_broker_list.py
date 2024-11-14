@@ -1,10 +1,9 @@
-import django
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest.mock import patch
 
 from profits.models import Broker
-from profits.serializer import BrokerSerializer
+from profits.serializers import BrokerSerializer
 
 
 class TestBrokerList(TestCase):

@@ -1,10 +1,9 @@
-import django
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest.mock import MagicMock, patch
 
 from profits.models import Broker, Currency, Operation
-from profits.serializer import OperationSerializer
+from profits.serializers import OperationSerializer
 
 
 class TestOperationList(TestCase):

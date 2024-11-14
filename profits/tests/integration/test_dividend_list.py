@@ -3,7 +3,7 @@ from django.urls import reverse
 from unittest.mock import patch, MagicMock
 
 from profits.models import Currency, Dividend
-from profits.serializer import DividendSerializer
+from profits.serializers import DividendSerializer
 
 
 class TestDividendList(TestCase):
