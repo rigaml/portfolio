@@ -1,10 +1,9 @@
-import django
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest.mock import patch
 
 from profits.models import Split
-from profits.serializer import SplitSerializer
+from profits.serializers import SplitSerializer
 
 
 class TestSplitList(TestCase):
