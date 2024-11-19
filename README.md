@@ -1,10 +1,11 @@
 # Portfolio
 Project implements a RESTful API using Django to manage a stocks portfolio.
 
-Django is setup to use a Postgres DB (`settings.py`)
+## The Story
+A few years back, I created a script to help me fill in my HMRC tax returns for stock operation gains/losses (mainly losses). I was in need of a project to showcase my Django skills, so I decided to replicate (and complicate) the existing functionality using Django, even though, for the initial purpose there was no real need for databases, APIs, or other advanced features.
 
 ## Functionality
-Given a list of stocks operations calculates the profits/loses for the portfolio for a particular year.
+Given a list of stock operations within a portfolio account, calculate the profits and losses for the account over a specified period.
 
 ## Usage (local)
 
@@ -18,9 +19,32 @@ poetry install
 
 See `pyproject.toml` for dependencies.
 
-Application used Postgres then you need the Postgres service install and database created.
+### Database
+Application is setup to use a Postgres database. Change `settings.py` to set the database of your liking or make sure Postgres database is installed, service is running and database created.
 
-Execute the database migrations to create the database tables based on `models.py` file.
+Package `psycopg2-binary` is installed to interface with Postgres
+```bash
+poetry add psycopg2-binary
+```
+
+Installing Postgres in Ubuntu
+```bash
+    sudo apt install postgresql postgresql-contrib libpq-dev
+```
+Start PostgreSQL service
+```bash
+sudo service postgresql start
+```
+Login to Postgres CLI
+```bash
+sudo -u postgres psql
+```
+and create the database
+```sql
+CREATE DATABASE portfoliodb;
+```
+
+With the application activated, run Django scripts to create database migrations. It will create tables based on `models.py` file.
 ```bash
 python manage.py makemigrations
 python manage.py migrate
