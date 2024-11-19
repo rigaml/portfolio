@@ -32,16 +32,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Access the endpoint from the browser entering in a browser the endpoint Url (example: `https://127.0.0.1:8000/profits/currencies/`)
-
-Uplodad currency exchanges from a file with Curl
-```bash
-curl -H "Authorization: Token <admin_token>"  \
-     -X POST 127.0.0.1:8000/profits/currency-exchanges/ \
-     -F "file=@profits/data/currency_exchanges/bankofengland-gbp-eur.csv" \
-     -F "origin=GBP" \
-     -F "target=EUR"
-```
+Browser to Url `https://127.0.0.1:8000/profits/` to see the list of endpoints.
 
 ### Testing
 To execute Django from VS Code follow this [configuration example](https://stackoverflow.com/questions/68997084/vscode-unittest-test-discovery-settings-for-django-app). Otherwise run from command line as in command below. 

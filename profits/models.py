@@ -1,6 +1,8 @@
 from uuid import uuid4
 from django.db import models
 
+from portfolio import settings
+
 class Broker(models.Model):
     name = models.CharField(max_length=10, unique=True)
     full_name= models.CharField(max_length=255, unique=True)
@@ -47,12 +49,14 @@ class Dividend(models.Model):
         unique_together = ('date', 'ticker')
 
 class Account(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid4)
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    
     broker = models.ForeignKey(Broker, on_delete=models.PROTECT)
     # reference provided by the broker to identify the account
     user_broker_ref = models.CharField(max_length=255)
-    # Reference to uniquely identify user account
-    user_own_ref = models.CharField(max_length=255, unique=True)
+    # reference set by the user to identify his accounts
+    user_own_ref = models.CharField(max_length=255)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

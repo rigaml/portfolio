@@ -14,7 +14,7 @@ class TestDividendList(TestCase):
     def tearDown(self):
         pass
 
-    @patch('profits.views.Dividend.objects.all')
+    @patch('profits.models.Dividend.objects.all')
     def test_dividend_list_given_get_request_returns_dividends(self, mock_dividend_all):
         """
         Tests get list dividend

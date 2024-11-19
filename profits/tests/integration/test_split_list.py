@@ -14,7 +14,7 @@ class TestSplitList(TestCase):
     def tearDown(self):
         pass
 
-    @patch('profits.views.Split.objects.all')
+    @patch('profits.models.Split.objects.all')
     def test_split_list_given_get_request_returns_splits(self, mock_split_all):
         """
         Tests get list splits

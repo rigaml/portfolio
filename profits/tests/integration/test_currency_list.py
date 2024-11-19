@@ -14,7 +14,7 @@ class TestCurrencyList(TestCase):
     def tearDown(self):
         pass
 
-    @patch('profits.views.Currency.objects.all')
+    @patch('profits.models.Currency.objects.all')
     def test_currency_list_given_get_request_returns_currencies(self, mock_currency_all):
         """
         Tests get list currencies

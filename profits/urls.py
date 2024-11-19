@@ -1,14 +1,15 @@
-from django.urls import path
-from . import views
+from rest_framework_nested import routers
+from rest_framework.routers import DefaultRouter
+from .views import views, currency_exchange_view, account_view
 
-urlpatterns = [
-    path('brokers/', views.BrokerList.as_view(), name='broker_list'),
-    path('brokers/<str:broker_name>/totals', views.get_totals, name='get_totals'),
-    path('brokers/<str:broker_name>/details', views.get_details, name='get_details'),
-    path('currencies/', views.CurrencyView.as_view(), name='currency_list'),
-    path('currency-exchanges/', views.CurrencyExchangeView.as_view(), name='currency-exchanges'),    
-    path('operations/<str:broker_name>/', views.OperationList.as_view(), name='operation_list'),
-    path('currency-exchanges/<str:origin>/<str:target>/', views.CurrencyExchangeList.as_view(), name='currency_exchange_list'),
-    path('splits/', views.SplitList.as_view(), name='split_list'),
-    path('dividends/', views.DividendList.as_view(), name='dividend_list'),
-]
+
+router = DefaultRouter()
+router.register('brokers', views.BrokerViewSet)
+router.register('currencies', views.CurrencyViewSet)
+router.register('currency-exchanges', currency_exchange_view.CurrencyExchangeViewSet)
+router.register('splits', views.SplitViewSet)
+router.register('dividends', views.DividendViewSet)
+router.register('accounts', account_view.AccountViewSet)
+router.register('operations', views.OperationViewSet)
+
+urlpatterns = router.urls

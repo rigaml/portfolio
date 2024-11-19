@@ -14,7 +14,7 @@ class TestBrokerList(TestCase):
     def tearDown(self):
         pass
 
-    @patch('profits.views.Broker.objects.all')
+    @patch('profits.models.Broker.objects.all')
     def test_broker_list_given_get_request_returns_brokers(self, mock_broker_all):
         """
         Tests get list brokers

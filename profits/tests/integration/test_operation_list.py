@@ -14,8 +14,8 @@ class TestOperationList(TestCase):
     def tearDown(self):
         pass
 
-    @patch('profits.views.Operation.objects.filter')
-    @patch('profits.views.get_object_or_404')
+    @patch('profits.models.Operation.objects.filter')
+    @patch('django.shortcuts.get_object_or_404')
     def test_operation_list_given_get_request_returns_operations(self, mock_get_object_or_404, mock_operation_filter):
         """
         Tests get list operations
