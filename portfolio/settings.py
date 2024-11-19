@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'debug_toolbar',
     'rest_framework',
+    # core: shared functionality for different apps
+    'core',
+    # profits: stock profits calculation
     'profits',
 ]
 
@@ -136,3 +139,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# To customize the User, instead of default Django User should use the one defined in `core` app
+AUTH_USER_MODEL = 'core.User'

@@ -1,35 +1,48 @@
 from rest_framework import serializers
 
-from profits.models import Broker, Currency, CurrencyExchange, Dividend, Operation, Split
+from profits.models import Account, Broker, Currency, CurrencyExchange, Dividend, Operation, Split
 
 
 class BrokerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Broker
-        fields = ['name', 'full_name', 'created_at']
-
+        fields = ['id', 'name', 'full_name', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 class CurrencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Currency
-        fields = ['iso_code', 'description', 'created_at']
-
-class OperationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Operation
-        fields = ['date', 'broker', 'type', 'ticker', 'quantity', 'currency', 'amount_total', 'created_at']
+        fields = ['id', 'iso_code', 'description', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 class CurrencyExchangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyExchange
-        fields = ['date', 'rate']
+        fields = ['id', 'date', 'origin', 'target', 'rate', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 class SplitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Split
-        fields = ['date', 'ticker', 'origin', 'target', 'created_at']
+        fields = ['id', 'date', 'ticker', 'origin', 'target', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 class DividendSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dividend
-        fields = ['date', 'ticker', 'currency', 'amount_total', 'created_at']
+        fields = ['id', 'date', 'ticker', 'currency', 'amount_total', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+class AccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ['id', 'user', 'broker', 'user_broker_ref', 'user_own_ref', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class OperationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Operation
+        fields = ['id', 'account', 'date', 'type', 'ticker', 'quantity', 'currency', 'amount_total', 'exchange', 'created_at']
+        read_only_fields = ['id', 'created_at']
+

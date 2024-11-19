@@ -13,7 +13,7 @@ class TestCurrencyExchangeList(TestCase):
     def tearDown(self):
         pass
 
-    @patch('profits.views.CurrencyExchange.objects.all')
+    @patch('profits.models.CurrencyExchange.objects.all')
     def test_currency_exchange_list_given_get_request_returns_currency_exchanges(self, mock_currency_exchange_all):
         """
         Tests get list currency exchanges.
