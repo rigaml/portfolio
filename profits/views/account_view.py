@@ -22,7 +22,7 @@ class AccountViewSet(ModelViewSet):
 
     def delete(self, request, pk):
         account= get_object_or_404(Account, pk=pk)
-        if broker.account_set.exists():   # type: ignore
+        if account.operation_set.exists():   # type: ignore
             return Response({'error': 'Account cannot be deleted because record is associated with another table'})
 
         account.delete()
