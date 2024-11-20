@@ -29,4 +29,4 @@ jobs:
 
     - name: Run Pylint
       run: |
-        poetry run pylint $(git ls-files '*.py') --errors-only
+        poetry run pylint $(git ls-files '*.py') --errors-only --load-plugins=pylint_django
