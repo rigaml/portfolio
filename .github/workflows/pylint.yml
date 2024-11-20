@@ -28,5 +28,8 @@ jobs:
         poetry run pip install pylint
 
     - name: Run Pylint
+      env:
+        # Set Django's settings module for pylint-django
+        DJANGO_SETTINGS_MODULE: portfolio.settings    
       run: |
         poetry run pylint $(git ls-files '*.py') --errors-only --load-plugins=pylint_django
