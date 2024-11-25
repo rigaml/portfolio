@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Poetry
@@ -31,5 +31,7 @@ jobs:
         poetry install --no-interaction --no-ansi
 
     - name: Run Tests
+        # Set Django's settings module for pytest
+        DJANGO_SETTINGS_MODULE: portfolio.settings       
       run: |
-        poetry run python manage.py test
+        poetry run pytest

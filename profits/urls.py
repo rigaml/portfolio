@@ -4,12 +4,12 @@ from .views import views, currency_exchange_view, account_view
 
 
 router = DefaultRouter()
-router.register('brokers', views.BrokerViewSet)
-router.register('currencies', views.CurrencyViewSet)
-router.register('currency-exchanges', currency_exchange_view.CurrencyExchangeViewSet)
-router.register('splits', views.SplitViewSet)
-router.register('dividends', views.DividendViewSet)
-router.register('accounts', account_view.AccountViewSet)
-router.register('operations', views.OperationViewSet)
+router.register('broker', views.BrokerViewSet)
+router.register('currency', views.CurrencyViewSet)
+router.register('currency-exchange', currency_exchange_view.CurrencyExchangeViewSet)
+router.register('split', views.SplitViewSet)
+router.register('dividend', views.DividendViewSet)
+router.register('account', account_view.AccountViewSet)
+router.register('operation', views.OperationViewSet)
 
 urlpatterns = router.urls

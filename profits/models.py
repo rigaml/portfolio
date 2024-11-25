@@ -78,7 +78,7 @@ class Operation(models.Model):
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     amount_total = models.DecimalField(max_digits=17, decimal_places=7)
     # Currency exchange as provided by the broker at the time of the operation
-    exchange = models.CharField(max_length=10)
+    exchange = models.DecimalField(max_digits=10, decimal_places=6)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

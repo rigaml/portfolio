@@ -16,9 +16,22 @@ django-filter = "^24.3"
 
 [tool.poetry.group.dev.dependencies]
 django-debug-toolbar = "^4.4.6"
+pytest = "^8.3.3"
+pytest-cov = "^6.0.0"
 pylint = "^3.3.1"
 pylint-django = "^2.6.1"
+pytest-django = "^4.9.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "portfolio.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = ["--strict-markers", "--tb=short", "--reuse-db"]
+
+[tool.pylint]
+load-plugins = ["pylint_django"]
+errors-only = true
+jobs = 4
