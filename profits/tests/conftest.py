@@ -56,9 +56,7 @@ def user_default(create_user) -> AbstractUser:
 @pytest.fixture
 def create_authenticated_client(api_client, user_default):
     def _get_authenticated_client(**kwargs) -> APIClient:
-        if 'user' not in kwargs:
-            user = user_default
-
+        user = kwargs.get('user', user_default)
         api_client.force_authenticate(user=user)
         return api_client
     return _get_authenticated_client
