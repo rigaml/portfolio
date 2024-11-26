@@ -3,6 +3,7 @@ import csv
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.utils.dateparse import parse_datetime
+from django.utils.timezone import make_aware
 
 from rest_framework import status
 from rest_framework.decorators import action
@@ -20,10 +21,12 @@ class AccountViewSet(ModelViewSet):
 
     # permission_classes = [IsAdminOrReadOnly]
 
-    def delete(self, request, pk):
+    def destroy(self, request, pk):
         account= get_object_or_404(Account, pk=pk)
         if account.operation_set.exists():   # type: ignore
-            return Response({'error': 'Account cannot be deleted because record is associated with another table'})
+            return Response(
+                {'error': 'Account cannot be deleted because record is associated with another table'}, 
+                status=status.HTTP_400_BAD_REQUEST)
 
         account.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -42,20 +45,14 @@ class AccountViewSet(ModelViewSet):
         date_start = request.query_params.get('date_start')
         date_end = request.query_params.get('date_end')
 
-        try:
-            date_start = parse_datetime(date_start) if date_start else None
-            date_end = parse_datetime(date_end) if date_end else None
-        except ValueError:
-            return Response(
-                {"detail": "Invalid date format. Use ISO 8601 format (e.g., 'YYYY-MM-DDTHH:MM:SS')."},
-                status=400
-            )
+        date_start = parse_datetime(date_start) if date_start else None
+        date_end = parse_datetime(date_end) if date_end else None
 
         operations = Operation.objects.filter(account=account)
         if date_start:
-            operations = operations.filter(date__gte=date_start)
+            operations = operations.filter(date__gte=make_aware(date_start))
         if date_end:
-            operations = operations.filter(date__lte=date_end)
+            operations = operations.filter(date__lte=make_aware(date_end))
 
         data = {
             'id': account.id,
@@ -78,20 +75,14 @@ class AccountViewSet(ModelViewSet):
         date_start = request.query_params.get('date_start')
         date_end = request.query_params.get('date_end')
 
-        try:
-            date_start = parse_datetime(date_start) if date_start else None
-            date_end = parse_datetime(date_end) if date_end else None
-        except ValueError:
-            return Response(
-                {"detail": "Invalid date format. Use ISO 8601 format (e.g., 'YYYY-MM-DDTHH:MM:SS')."},
-                status=400
-            )
+        date_start = parse_datetime(date_start) if date_start else None
+        date_end = parse_datetime(date_end) if date_end else None
 
         operations = Operation.objects.filter(account=account)
         if date_start:
-            operations = operations.filter(date__gte=date_start)
+            operations = operations.filter(date__gte=make_aware(date_start))
         if date_end:
-            operations = operations.filter(date__lte=date_end)
+            operations = operations.filter(date__lte=make_aware(date_end))
 
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="operations_account_{pk}.csv"'

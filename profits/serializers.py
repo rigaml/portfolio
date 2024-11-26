@@ -16,6 +16,15 @@ class CurrencySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 class CurrencyExchangeSerializer(serializers.ModelSerializer):
+    origin = serializers.SerializerMethodField()
+    target = serializers.SerializerMethodField()
+
+    def get_origin(self, obj):
+        return obj.origin.iso_code
+
+    def get_target(self, obj):
+        return obj.target.iso_code
+    
     class Meta:
         model = CurrencyExchange
         fields = ['id', 'date', 'origin', 'target', 'rate', 'created_at']
@@ -28,6 +37,10 @@ class SplitSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 class DividendSerializer(serializers.ModelSerializer):
+    currency = serializers.SlugRelatedField(
+        queryset=Currency.objects.all(), slug_field='iso_code'
+    )
+
     class Meta:
         model = Dividend
         fields = ['id', 'date', 'ticker', 'currency', 'amount_total', 'created_at']
@@ -41,6 +54,10 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class OperationSerializer(serializers.ModelSerializer):
+    currency = serializers.SlugRelatedField(
+        queryset=Currency.objects.all(), slug_field='iso_code'
+    )
+    
     class Meta:
         model = Operation
         fields = ['id', 'account', 'date', 'type', 'ticker', 'quantity', 'currency', 'amount_total', 'exchange', 'created_at']

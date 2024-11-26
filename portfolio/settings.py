@@ -59,6 +59,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+## Uncomment for enable authentication for API request
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework.authentication.SessionAuthentication',
+#         'rest_framework.authentication.BasicAuthentication',
+#         Add other authentication classes if needed
+#     ],
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticated',
+#     ],
+# }
+
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
@@ -95,6 +107,9 @@ DATABASES = {
         'PASSWORD': 'dummypassword',
         'HOST': 'localhost',
         'PORT': '5432',
+        'TEST': {
+            'NAME': ':memory:',  # Use in-memory SQLite for tests
+        }        
     }
 }
 
