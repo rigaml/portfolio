@@ -4,7 +4,6 @@ from datetime import datetime
 
 from django.urls import reverse
 
-from rest_framework.test import APIClient
 from rest_framework import status
 
 from profits.models import Split
