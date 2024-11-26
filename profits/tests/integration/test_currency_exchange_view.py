@@ -1,10 +1,8 @@
 import pytest
 
-from typing import Callable
-
 import io
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -12,28 +10,10 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 
 from profits.models import CurrencyExchange
-from profits.tests.conftest import create_currency, create_exchange
 
 
 @pytest.fixture
-def currency_usd(create_currency):
-    return create_currency(iso_code='USD', description='US Dollar')
-
-@pytest.fixture
-def currency_eur(create_currency):
-    return create_currency(iso_code='EUR', description='Euro')
-
-@pytest.fixture
-def currency_exchange(create_exchange, currency_usd, currency_eur):
-    return create_exchange(
-        date=datetime.strptime('01 Jan 23', '%d %b %y').date(),
-        origin=currency_usd,
-        target=currency_eur,
-        rate=1.15
-    )
-
-@pytest.fixture
-def csv_file():
+def exchanges_csv():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['Date', 'ExchangeRate'])
@@ -41,39 +21,49 @@ def csv_file():
     writer.writerow(['02 Jan 23', '1.16'])
     
     return SimpleUploadedFile(
-        'rates.csv',
+        'exchange_rates.csv',
         output.getvalue().encode('utf-8'),
         content_type='text/csv'
     )
 
 @pytest.mark.django_db
 class TestCurrencyExchangeViewSet:
-    def test_list_exchanges(self, authenticated_client, currency_exchange):
+    def test_list_when_single_currency_exchange(self, authenticated_client, currency_exchange_default):
         url = reverse('currencyexchange-list')
-        response = authenticated_client().get(url)
+        response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['results']) == 1
 
-    def test_retrieve_exchange(self, authenticated_client, currency_exchange):
-        url = reverse('currencyexchange-detail', args=[currency_exchange.id])
-        response = authenticated_client().get(url)
+    def test_list_when_multiple_currency_exchanges(self, authenticated_client, create_currency_exchange, currency_eur):
+        create_currency_exchange()
+        create_currency_exchange(target=currency_eur)
+
+        url = reverse('currencyexchange-list')
+        response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['date'] == datetime.strftime(currency_exchange.date, "%Y-%m-%d")
-        assert response.data['origin'] == currency_exchange.origin.iso_code
-        assert response.data['target'] == currency_exchange.target.iso_code
-        assert response.data['rate'] == '1.150000'
+        assert len(response.data['results']) == 2
 
-    def test_upload_exchange_rates_success(self, authenticated_client, currency_usd, currency_eur, csv_file):
+    def test_retrieve_exchange(self, authenticated_client, currency_exchange_default):
+        url = reverse('currencyexchange-detail', args=[currency_exchange_default.id])
+        response = authenticated_client.get(url)
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['date'] == datetime.strftime(currency_exchange_default.date, "%Y-%m-%d")
+        assert response.data['origin'] == currency_exchange_default.origin.iso_code
+        assert response.data['target'] == currency_exchange_default.target.iso_code
+        assert response.data['rate'] == f"{currency_exchange_default.rate:.6f}"
+
+    def test_upload_exchange_rates_success(self, authenticated_client, currency_usd, currency_eur, exchanges_csv):
         url = reverse('currencyexchange-upload')
         data = {
             'origin': currency_usd.iso_code,
             'target': currency_eur.iso_code,
-            'file': csv_file
+            'file': exchanges_csv
         }
         
-        response = authenticated_client().post(url, data, format='multipart')
+        response = authenticated_client.post(url, data, format='multipart')
         
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['message'] == 'Successfully imported 2 exchange rates'
@@ -84,12 +74,12 @@ class TestCurrencyExchangeViewSet:
                               ("target"),
                               ("file")
                             ])
-    def test_upload_exchange_rates_missing_fields(self, authenticated_client, currency_usd, currency_eur, csv_file, missing_field):
+    def test_upload_exchange_rates_missing_fields(self, authenticated_client, currency_usd, currency_eur, exchanges_csv, missing_field):
         url = reverse('currencyexchange-upload')
         data = {
             'origin': currency_usd.iso_code,
             'target': currency_eur.iso_code,
-            'file': csv_file
+            'file': exchanges_csv
         }
         if missing_field == 'origin': 
             data.pop('origin')
@@ -98,7 +88,7 @@ class TestCurrencyExchangeViewSet:
         elif missing_field != 'file':
             data.pop('file')
         
-        response = authenticated_client().post(url, data, format='multipart')
+        response = authenticated_client.post(url, data, format='multipart')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
@@ -117,7 +107,7 @@ class TestCurrencyExchangeViewSet:
             'file': invalid_csv
         }
         
-        response = authenticated_client().post(url, data, format='multipart')
+        response = authenticated_client.post(url, data, format='multipart')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
@@ -126,31 +116,26 @@ class TestCurrencyExchangeViewSet:
                             [("origin"),
                               ("target")
                             ])
-    def test_upload_exchange_rates_invalid_currency(self, authenticated_client, currency_usd, csv_file, invalid_currency: str):
+    def test_upload_exchange_rates_invalid_currency(self, authenticated_client, currency_usd, exchanges_csv, invalid_currency: str):
         url = reverse('currencyexchange-upload')
         data = {
             'origin': 'BAD' if invalid_currency == "origin" else currency_usd.iso_code,
             'target': 'BAD' if invalid_currency == "target" else currency_usd.iso_code,
-            'file': csv_file
+            'file': exchanges_csv
         }
         
-        response = authenticated_client().post(url, data, format='multipart')
+        response = authenticated_client.post(url, data, format='multipart')
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_bulk_delete_success(self, authenticated_client, currency_exchange, currency_usd, currency_eur):
-        # Create another exchange rate
-        CurrencyExchange.objects.create(
-            date=datetime.strptime('02 Jan 23', '%d %b %y').date(),
-            origin=currency_usd,
-            target=currency_eur,
-            rate=1.16
-        )
+    def test_bulk_delete_success(self, authenticated_client, create_currency_exchange):
+        exchange1= create_currency_exchange()
+        exchange2= create_currency_exchange(date= exchange1.date - timedelta(days=1))
         
         url = reverse('currencyexchange-bulk-delete')
-        url += f'?origin={currency_usd.iso_code}&target={currency_eur.iso_code}'
+        url += f'?origin={exchange2.origin.iso_code}&target={exchange2.target.iso_code}'
         
-        response = authenticated_client().delete(url)
+        response = authenticated_client.delete(url)
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['message'] == 'Successfully deleted 2 exchange rates'
@@ -158,7 +143,7 @@ class TestCurrencyExchangeViewSet:
 
     def test_bulk_delete_missing_params(self, authenticated_client):
         url = reverse('currencyexchange-bulk-delete')
-        response = authenticated_client().delete(url)
+        response = authenticated_client.delete(url)
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
@@ -167,12 +152,12 @@ class TestCurrencyExchangeViewSet:
                             [("origin"),
                               ("target")
                             ])
-    def test_bulk_delete_invalid_currency(self, authenticated_client, currency_usd, invalid_currency: str):
+    def test_bulk_delete_invalid_currency(self, authenticated_client, currency_usd, invalid_currency):
         origin = currency_usd.iso_code if invalid_currency != "origin" else 'BAD',
         target =  currency_usd.iso_code if invalid_currency != "target" else 'BAD',
         url = reverse('currencyexchange-bulk-delete')
         url += f'?origin={origin}&target={target}'
         
-        response = authenticated_client().delete(url)
+        response = authenticated_client.delete(url)
         
         assert response.status_code == status.HTTP_404_NOT_FOUND

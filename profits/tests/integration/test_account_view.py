@@ -3,51 +3,11 @@ import pytest
 from datetime import datetime
 
 from django.urls import reverse
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
-from django.utils.timezone import make_aware
 
-from rest_framework.test import APIClient
 from rest_framework import status
 
-from profits.models import Account, Broker, Currency, Operation
+from profits.models import Account
 
-# Gets the active User model, in our case, one defined in `core.models.User`
-User = get_user_model()
-
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-@pytest.fixture
-def user():
-    return User.objects.create_user(
-        username='testuser',
-        email='test@example.com',
-        password='testpass123'
-    )
-
-@pytest.fixture
-def broker():
-    return Broker.objects.create(
-        name='BRO',
-        full_name='Test Broker'
-    )
-
-@pytest.fixture
-def account(user: AbstractUser, broker: Broker):
-    return Account.objects.create(
-        user=user,
-        broker=broker,
-        user_broker_ref='UserBrokerRef123',
-        user_own_ref='UserOwnRef456'
-    )
-
-@pytest.fixture
-def authenticated_client(api_client: APIClient, user: AbstractUser):
-    api_client.force_authenticate(user=user)
-    return api_client
-    
 @pytest.mark.django_db
 class TestAccountViewSet:
 
@@ -58,26 +18,18 @@ class TestAccountViewSet:
         
     #     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_list_accounts_when_single_account(self, authenticated_client: APIClient, account: Account):
-        """
-        'account' parameter added, even not used in code, to trigger creation in fixture.
-        """
+    def test_list_accounts_when_single_account(self, authenticated_client, account_default):
         url = reverse('account-list')
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
+        assert response.data[0]['user_broker_ref'] == account_default.user_broker_ref
+        assert response.data[0]['user_own_ref'] == account_default.user_own_ref
         assert len(response.data) == 1
 
-    def test_list_accounts_when_multiple_accounts(self, authenticated_client: APIClient, account: Account, user: AbstractUser, broker: Broker):
-        """
-        'account' parameter added, even not used in code, to trigger creation in fixture.
-        """
-        Account.objects.create(
-            user=user,
-            broker=broker,
-            user_broker_ref='UserBrokerRef456',
-            user_own_ref='UserOwnRef456'
-        )
+    def test_list_accounts_when_multiple_accounts(self, authenticated_client, create_account, user_default, broker_default):
+        create_account()
+        create_account()
 
         url = reverse('account-list')
         response = authenticated_client.get(url)
@@ -86,22 +38,19 @@ class TestAccountViewSet:
         assert len(response.data) == 2
 
 
-    def test_retrieve_account(self, authenticated_client: APIClient, account: Account):
-        """
-        'account' parameter added, even not used in code, to trigger creation in fixture.
-        """
-        url = reverse('account-detail', args=[account.id])
+    def test_retrieve_account(self, authenticated_client, account_default):
+        url = reverse('account-detail', args=[account_default.id])
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['user_broker_ref'] == account.user_broker_ref
-        assert response.data['user_own_ref'] == account.user_own_ref
+        assert response.data['user_broker_ref'] == account_default.user_broker_ref
+        assert response.data['user_own_ref'] == account_default.user_own_ref
 
-    def test_create_account(self, authenticated_client: APIClient, user: AbstractUser , broker: Broker):
+    def test_create_account(self, authenticated_client, user_default , broker_default):
         url = reverse('account-list')
         data = {
-            'user': user.id, 
-            'broker': broker.id,
+            'user': user_default.id, 
+            'broker': broker_default.id,
             'user_broker_ref': 'NEW123',
             'user_own_ref': 'MyNewAccount'
         }
@@ -115,38 +64,26 @@ class TestAccountViewSet:
         assert response.data['user_own_ref'] == data['user_own_ref']
         assert Account.objects.count() == 1
 
-    def test_delete_account_when_has_no_entities_linked(self, authenticated_client: APIClient, account: Account):
-        url = reverse('account-detail', args=[account.id])
+    def test_delete_account_when_has_no_entities_linked(self, authenticated_client, account_default):
+        url = reverse('account-detail', args=[account_default.id])
         response = authenticated_client.delete(url)
         
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert not Account.objects.filter(id=account.id).exists()
+        assert not Account.objects.filter(id=account_default.id).exists()
 
-    def test_delete_account_when_has_operations_linked(self, authenticated_client: APIClient, account: Account):
-        currency= Currency.objects.create(
-            iso_code = 'GBP',
-            description = 'GBP'
-        )
-        Operation.objects.create(
-            account=account,
-            date=make_aware(datetime.now()),
-            type= Operation.TYPE_CHOICES[0][0],
-            ticker= 'TSLA',
-            quantity= 10.0,
-            currency= currency,
-            amount_total = 10000,
-            exchange = 1
-        )
-        
-        url = reverse('account-detail', args=[account.id])
+    def test_delete_account_when_has_operations_linked(self, authenticated_client, account_default, operation_default):
+        """
+        When `operation_default` is created points to `account_default`
+        """
+        url = reverse('account-detail', args=[account_default.id])
         response = authenticated_client.delete(url)
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
-        assert Account.objects.filter(id=account.id).exists()
+        assert Account.objects.filter(id=account_default.id).exists()
 
-    def test_total_when_valid_parameters(self, authenticated_client: APIClient, account: Account):
-        url = reverse('account-total', args=[account.id])
+    def test_total_when_valid_parameters(self, authenticated_client, account_default):
+        url = reverse('account-total', args=[account_default.id])
         params = {
             'date_start': '2023-01-01T00:00:00',
             'date_end': '2023-12-31T23:59:59'
@@ -155,37 +92,37 @@ class TestAccountViewSet:
         response = authenticated_client.get(url, params)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['id'] == account.id
+        assert response.data['id'] == account_default.id
         assert response.data['amount_total'] == 10000
         assert response.data['date_start'] == datetime.fromisoformat(params['date_start'])
         assert response.data['date_end'] == datetime.fromisoformat(params['date_end'])
 
-    def test_total_when_invalid_dates(self, authenticated_client: APIClient, account: Account):
-        url = reverse('account-total', args=[account.id])
+    def test_total_when_invalid_dates(self, authenticated_client, account_default):
+        url = reverse('account-total', args=[account_default.id])
         params = {
             'date_start': 'invalid-date',
-            'date_end': '2023-12-31'
+            'date_end': '2023-12-31T23:59:59'
         }
         
         response = authenticated_client.get(url, params)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['id'] == account.id
+        assert response.data['id'] == account_default.id
         assert response.data['amount_total'] == 10000
         assert response.data['date_start'] is None
         assert response.data['date_end'] == datetime.fromisoformat(params['date_end'])
 
-    def test_total_when_no_dates(self, authenticated_client: APIClient, account: Account):
-        url = reverse('account-total', args=[account.id])
+    def test_total_when_no_dates(self, authenticated_client, account_default):
+        url = reverse('account-total', args=[account_default.id])
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['id'] == account.id
+        assert response.data['id'] == account_default.id
         assert response.data['amount_total'] == 10000
         assert response.data['date_start'] is None
         assert response.data['date_end'] is None
 
-    def test_total_account_not_found(self, authenticated_client: APIClient):
+    def test_total_account_not_found(self, authenticated_client):
         url = reverse('account-total', args=[99999])
         response = authenticated_client.get(url)
         

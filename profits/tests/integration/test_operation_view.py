@@ -1,75 +1,10 @@
 import pytest
 
-from datetime import datetime
-
 from django.urls import reverse
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
-from django.utils.timezone import make_aware
 
-from rest_framework.test import APIClient
 from rest_framework import status
 
-from profits.models import Account, Broker, Currency, Operation
-
-# Gets the active User model, in our case, one defined in `core.models.User`
-User = get_user_model()
-
-date_str = '2023-01-01T00:00:00'
-date_start = make_aware(datetime.fromisoformat(date_str))
-
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-@pytest.fixture
-def user():
-    return User.objects.create_user(
-        username='testuser',
-        email='test@example.com',
-        password='testpass123'
-    )
-
-@pytest.fixture
-def broker():
-    return Broker.objects.create(
-        name='BRO',
-        full_name='Test Broker'
-    )
-
-@pytest.fixture
-def account(user: AbstractUser, broker: Broker):
-    return Account.objects.create(
-        user=user,
-        broker=broker,
-        user_broker_ref='UserBrokerRef123',
-        user_own_ref='UserOwnRef456'
-    )
-
-@pytest.fixture
-def currency():
-    return Currency.objects.create(
-            iso_code = 'USD',
-            description = 'USD'
-        )
-
-@pytest.fixture
-def operation(account: Account, currency: Currency):
-    return Operation.objects.create(
-        account= account,
-        date= date_start,
-        type=Operation.TYPE_CHOICES[0][0],
-        ticker='TSLA',
-        quantity= 10,
-        currency= currency,
-        amount_total= 100,
-        exchange= 1
-    )
-
-@pytest.fixture
-def authenticated_client(api_client: APIClient, user: AbstractUser):
-    api_client.force_authenticate(user=user)
-    return api_client
+from profits.models import Operation
 
 @pytest.mark.django_db
 class TestOperationViewSet:
@@ -81,30 +16,20 @@ class TestOperationViewSet:
         
     #     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_list_operations_when_single_operation(self, authenticated_client: APIClient, operation: Operation):
-        """
-        'operation' parameter added, even not used in code, to trigger creation in fixture.
-        """        
+    def test_list_operations_when_single_operation(self, authenticated_client, operation_default):
         url = reverse('operation-list')
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 1
 
-    def test_list_operations_when_multiple_operations(self, authenticated_client: APIClient, account: Account, currency: Currency, operation: Operation):
-        """
-        'operation' parameter added, even not used in code, to trigger creation in fixture.
-        """
-        Operation.objects.create(
-            account= account,
-            date= date_start,
-            type=Operation.TYPE_CHOICES[0][0],
-            ticker='AMZN',
-            quantity= 10,
-            currency= currency,
-            amount_total= 100,
-            exchange= 1
-            )
+    def test_list_operations_when_multiple_operations(
+            self, 
+            authenticated_client, 
+            create_operation,
+            date_factory):
+        create_operation()
+        create_operation(date=date_factory('2024-02-01'))
 
         url = reverse('operation-list')
         response = authenticated_client.get(url)
@@ -112,31 +37,29 @@ class TestOperationViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
 
-    def test_retrieve_operation(self, authenticated_client: APIClient, operation: Operation):
-        """
-        'operation' parameter added, even not used in code, to trigger creation in fixture.
-        """
-        url = reverse('operation-detail', args=[operation.id])
+    def test_retrieve_operation(self, authenticated_client, operation_default, date_default):
+        url = reverse('operation-detail', args=[operation_default.id])
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['date'] == date_start.isoformat().replace('+00:00', 'Z')
-        assert response.data['type'] == operation.type
-        assert response.data['ticker'] == operation.ticker
-        assert response.data['quantity'] == f"{operation.quantity:.7f}"
-        assert response.data['currency'] == operation.currency.iso_code
-        assert response.data['amount_total'] == f"{operation.amount_total:.7f}"
-        assert response.data['exchange'] == f"{operation.exchange:.6f}"
+        assert response.data['date'] == date_default.isoformat().replace('+00:00', 'Z')
+        assert response.data['type'] == operation_default.type
+        assert response.data['ticker'] == operation_default.ticker
+        assert response.data['quantity'] == f"{operation_default.quantity:.7f}"
+        assert response.data['currency'] == operation_default.currency.iso_code
+        assert response.data['amount_total'] == f"{operation_default.amount_total:.7f}"
+        assert response.data['exchange'] == f"{operation_default.exchange:.6f}"
 
-    def test_create_operation(self, authenticated_client: APIClient, account: Account, currency: Currency, operation: Operation):
+    def test_create_operation(self, authenticated_client, account_default, currency_gbp, operation_default, date_factory):
         url = reverse('operation-list')
+        date_create = date_factory('2024-02-01')
         data = {
-            'account': account.id,
-            'date': date_start,
-            'type': Operation.TYPE_CHOICES[0][0],
+            'account': account_default.id,
+            'date': date_create,
+            'type': operation_default.TYPE_CHOICES[0][0],
             'ticker': 'AMZN',
             'quantity': 10,
-            'currency': currency.iso_code,
+            'currency': currency_gbp.iso_code,
             'amount_total': 100,
             'exchange': 1
         }
@@ -144,7 +67,7 @@ class TestOperationViewSet:
         response = authenticated_client.post(url, data)
         
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data['date'] == date_start.isoformat().replace('+00:00', 'Z')
+        assert response.data['date'] == date_create.isoformat().replace('+00:00', 'Z')
         assert response.data['type'] == data['type']
         assert response.data['ticker'] == data['ticker']
         assert response.data['quantity'] == f"{data['quantity']:.7f}"
@@ -153,21 +76,21 @@ class TestOperationViewSet:
         assert response.data['exchange'] == f"{data['exchange']:.6f}"
         assert Operation.objects.count() == 2
 
-    def test_delete_operation_when_has_no_entities_linked(self, authenticated_client: APIClient, operation: Operation):
-        url = reverse('operation-detail', args=[operation.id])
+    def test_delete_operation_when_has_no_entities_linked(self, authenticated_client, operation_default):
+        url = reverse('operation-detail', args=[operation_default.id])
         response = authenticated_client.delete(url)
         
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert not Operation.objects.filter(id=operation.id).exists()
+        assert not Operation.objects.filter(id=operation_default.id).exists()
 
-    def test_update_operation(self, authenticated_client: APIClient, operation: Operation):
-        url = reverse('operation-detail', args=[operation.id])
+    def test_update_operation(self, authenticated_client, operation_default):
+        url = reverse('operation-detail', args=[operation_default.id])
         response = authenticated_client.put(url)
         
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_partial_update_operation(self, authenticated_client: APIClient, operation: Operation):
-        url = reverse('operation-detail', args=[operation.id])
+    def test_partial_update_operation(self, authenticated_client, operation_default):
+        url = reverse('operation-detail', args=[operation_default.id])
         response = authenticated_client.patch(url)
         
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
