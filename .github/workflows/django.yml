@@ -8,12 +8,22 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
       matrix:
         python-version: [3.11]
+
+    services:
+      #Sets postgres service to run the tests
+      postgres:
+        image: postgres:13
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_USER: portfoliouser
+          POSTGRES_PASSWORD: dummypassword
+          POSTGRES_DB: portfoliodb
 
     steps:
     - uses: actions/checkout@v4
@@ -33,6 +43,7 @@ jobs:
     - name: Run Tests
       env:
         # Set Django's settings module for pytest
-        DJANGO_SETTINGS_MODULE: portfolio.settings       
+        DJANGO_SETTINGS_MODULE: portfolio.settings
+        DATABASE_URL: postgres://portfoliouser:dummypassword@localhost:5432/portfoliodb
       run: |
         poetry run pytest

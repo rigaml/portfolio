@@ -107,9 +107,6 @@ DATABASES = {
         'PASSWORD': 'dummypassword',
         'HOST': 'localhost',
         'PORT': '5432',
-        'TEST': {
-            'NAME': ':memory:',  # Use in-memory SQLite for tests
-        }        
     }
 }
 
