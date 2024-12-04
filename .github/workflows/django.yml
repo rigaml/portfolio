@@ -31,6 +31,7 @@ jobs:
         poetry install --no-interaction --no-ansi
 
     - name: Run Tests
+      env:
         # Set Django's settings module for pytest
         DJANGO_SETTINGS_MODULE: portfolio.settings       
       run: |
