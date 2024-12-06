@@ -13,7 +13,7 @@ class BrokerViewSet(BaseViewSet):
 
     def destroy(self, request, pk):
         broker= get_object_or_404(Broker, pk=pk)
-        if broker.account_set.exists():   # type: ignore
+        if broker.account_set.exists():   # type: ignore (Pylance does not get `broker.account_set` reference)
             return Response({'error': 'Broker cannot be deleted because record is associated with another table'}, 
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -35,16 +35,7 @@ class CurrencyViewSet(BaseViewSet):
 
         currency.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-        
-class SplitViewSet(BaseViewSet):
-    queryset = Split.objects.all()
-    serializer_class = SplitSerializer
-
 
 class DividendViewSet(BaseViewSet):
     queryset = Dividend.objects.select_related('currency')
     serializer_class = DividendSerializer
-
-class OperationViewSet(BaseViewSet):
-    queryset = Operation.objects.select_related('currency')
-    serializer_class = OperationSerializer

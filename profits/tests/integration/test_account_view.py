@@ -51,8 +51,8 @@ class TestAccountViewSet:
         data = {
             'user': user_default.id, 
             'broker': broker_default.id,
-            'user_broker_ref': 'NEW123',
-            'user_own_ref': 'MyNewAccount'
+            'user_broker_ref': 'Create UserBrokerRef',
+            'user_own_ref': 'Create UserOwnRef'
         }
         
         response = authenticated_client.post(url, data)
@@ -64,6 +64,39 @@ class TestAccountViewSet:
         assert response.data['user_own_ref'] == data['user_own_ref']
         assert Account.objects.count() == 1
 
+    def test_update_account(self, authenticated_client, account_default, user_default , broker_default):
+        url = reverse('account-detail', args=[account_default.id])
+        data = {
+            'user': user_default.id, 
+            'broker': broker_default.id,
+            'user_broker_ref': 'Update UserBrokerRef',
+            'user_own_ref': 'Update UserOwnRef'
+        }
+        
+        response = authenticated_client.put(url, data)
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['user'] == data['user']
+        assert response.data['broker'] == data['broker']
+        assert response.data['user_broker_ref'] == data['user_broker_ref']
+        assert response.data['user_own_ref'] == data['user_own_ref']
+        assert Account.objects.count() == 1
+
+    def test_partial_update_account(self, authenticated_client, account_default, user_default , broker_default):
+        url = reverse('account-detail', args=[account_default.id])
+        data = {
+            'user_own_ref': 'Update UserOwnRef'
+        }
+        
+        response = authenticated_client.patch(url, data)
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['user'] == user_default.id
+        assert response.data['broker'] == broker_default.id
+        assert response.data['user_broker_ref'] == account_default.user_broker_ref
+        assert response.data['user_own_ref'] == data['user_own_ref']
+        assert Account.objects.count() == 1
+        
     def test_delete_account_when_has_no_entities_linked(self, authenticated_client, account_default):
         url = reverse('account-detail', args=[account_default.id])
         response = authenticated_client.delete(url)
@@ -122,7 +155,7 @@ class TestAccountViewSet:
         assert response.data['date_start'] is None
         assert response.data['date_end'] is None
 
-    def test_total_account_not_found(self, authenticated_client):
+    def test_total_account_when_not_found_returns_404(self, authenticated_client):
         url = reverse('account-total', args=[99999])
         response = authenticated_client.get(url)
         

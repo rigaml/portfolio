@@ -73,4 +73,17 @@ class TestBrokerViewSet:
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
-        assert Broker.objects.filter(id=broker_default.id).exists()    
+        assert Broker.objects.filter(id=broker_default.id).exists()
+
+    def test_update_broker_when_called_returns_not_allowed(self, authenticated_client, broker_default):
+        url = reverse('broker-detail', args=[broker_default.id])
+        response = authenticated_client.put(url)
+        
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_partial_update_broker_when_called_returns_not_allowed(self, authenticated_client, broker_default):
+        url = reverse('broker-detail', args=[broker_default.id])
+        response = authenticated_client.patch(url)
+        
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+

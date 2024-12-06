@@ -2,7 +2,7 @@ import pytest
 
 import io
 import csv
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -28,29 +28,34 @@ def exchanges_csv():
 
 @pytest.mark.django_db
 class TestCurrencyExchangeViewSet:
-    def test_list_when_single_currency_exchange(self, authenticated_client, currency_exchange_default):
+
+    def test_list_currency_exchange_when_single_operation(self, authenticated_client, currency_exchange_default):
         url = reverse('currencyexchange-list')
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['results']) == 1
+        assert len(response.data) == 1
 
-    def test_list_when_multiple_currency_exchanges(self, authenticated_client, create_currency_exchange, currency_eur):
+    def test_list_currency_exchange_when_multiple_operations(
+            self, 
+            authenticated_client, 
+            create_currency_exchange,
+            date_factory):
         create_currency_exchange()
-        create_currency_exchange(target=currency_eur)
+        create_currency_exchange(date=date_factory('2024-02-01'))
 
         url = reverse('currencyexchange-list')
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['results']) == 2
+        assert len(response.data) == 2
 
-    def test_retrieve_exchange(self, authenticated_client, currency_exchange_default):
+    def test_retrieve_currency_exchange(self, authenticated_client, currency_exchange_default):
         url = reverse('currencyexchange-detail', args=[currency_exchange_default.id])
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['date'] == datetime.strftime(currency_exchange_default.date, "%Y-%m-%d")
+        assert response.data['date'] == currency_exchange_default.date.date().isoformat()
         assert response.data['origin'] == currency_exchange_default.origin.iso_code
         assert response.data['target'] == currency_exchange_default.target.iso_code
         assert response.data['rate'] == f"{currency_exchange_default.rate:.6f}"
@@ -128,7 +133,7 @@ class TestCurrencyExchangeViewSet:
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_bulk_delete_success(self, authenticated_client, create_currency_exchange):
+    def test_bulk_delete_exchange_rates_success(self, authenticated_client, create_currency_exchange):
         exchange1= create_currency_exchange()
         exchange2= create_currency_exchange(date= exchange1.date - timedelta(days=1))
         
@@ -141,7 +146,7 @@ class TestCurrencyExchangeViewSet:
         assert response.data['message'] == 'Successfully deleted 2 exchange rates'
         assert CurrencyExchange.objects.count() == 0
 
-    def test_bulk_delete_missing_params(self, authenticated_client):
+    def test_bulk_delete_exchange_rates_missing_params(self, authenticated_client):
         url = reverse('currencyexchange-bulk-delete')
         response = authenticated_client.delete(url)
         
@@ -152,7 +157,7 @@ class TestCurrencyExchangeViewSet:
                             [("origin"),
                               ("target")
                             ])
-    def test_bulk_delete_invalid_currency(self, authenticated_client, currency_usd, invalid_currency):
+    def test_bulk_delete_exchange_rates_invalid_currency(self, authenticated_client, currency_usd, invalid_currency):
         origin = currency_usd.iso_code if invalid_currency != "origin" else 'BAD',
         target =  currency_usd.iso_code if invalid_currency != "target" else 'BAD',
         url = reverse('currencyexchange-bulk-delete')

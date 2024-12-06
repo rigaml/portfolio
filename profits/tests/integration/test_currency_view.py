@@ -92,3 +92,15 @@ class TestCurrencyViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
         assert Currency.objects.filter(id=operation_default.currency.id).exists()   
+
+    def test_update_currency_when_called_returns_not_allowed(self, authenticated_client, currency_gbp):
+        url = reverse('currency-detail', args=[currency_gbp.id])
+        response = authenticated_client.put(url)
+        
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_partial_update_currency_when_called_returns_not_allowed(self, authenticated_client, currency_gbp):
+        url = reverse('currency-detail', args=[currency_gbp.id])
+        response = authenticated_client.patch(url)
+        
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
