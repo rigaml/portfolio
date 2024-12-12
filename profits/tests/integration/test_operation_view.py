@@ -10,6 +10,8 @@ from rest_framework import status
 
 from profits.models import Operation
 
+NON_EXISTING_ID = 999999
+
 @pytest.fixture
 def operations_csv():
     output = io.StringIO()
@@ -33,6 +35,14 @@ class TestOperationViewSet:
     #     response = api_client.get(url)
         
     #     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_list_operations_when_no_operation_returns_empty_list(self, authenticated_client):
+        url = reverse('operation-list')
+        response = authenticated_client.get(url)
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 0
+
 
     def test_list_operations_when_single_operation(self, authenticated_client, operation_default):
         url = reverse('operation-list')
@@ -67,6 +77,12 @@ class TestOperationViewSet:
         assert response.data['currency'] == operation_default.currency.iso_code
         assert response.data['amount_total'] == f"{operation_default.amount_total:.7f}"
         assert response.data['exchange'] == f"{operation_default.exchange:.6f}"
+
+    def test_retrieve_operation_when_id_does_not_exist_returns_404(self, authenticated_client, operation_default):
+        url = reverse('operation-detail', args=[NON_EXISTING_ID])
+        response = authenticated_client.get(url)
+        
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_create_operation(self, authenticated_client, account_default, currency_gbp, operation_default, date_factory):
         url = reverse('operation-list')
@@ -115,7 +131,7 @@ class TestOperationViewSet:
 
     def test_upload_operations_success(self, authenticated_client, account_default, currency_usd, operations_csv):
         """
-        Parameter `currency_usd` required so it is created in DB.
+        Passing parameter `currency_usd` executes the fixture and creates the value in DB.
         """
         url = reverse('operation-upload')
         data = {

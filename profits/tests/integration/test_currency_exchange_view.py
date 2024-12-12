@@ -11,6 +11,7 @@ from rest_framework import status
 
 from profits.models import CurrencyExchange
 
+NON_EXISTING_ID = 999999
 
 @pytest.fixture
 def exchanges_csv():
@@ -29,14 +30,21 @@ def exchanges_csv():
 @pytest.mark.django_db
 class TestCurrencyExchangeViewSet:
 
-    def test_list_currency_exchange_when_single_operation(self, authenticated_client, currency_exchange_default):
+    def test_list_currency_exchange_when_no_currency_exchange_returns_empty_list(self, authenticated_client):
+        url = reverse('currencyexchange-list')
+        response = authenticated_client.get(url)
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 0
+
+    def test_list_currency_exchange_when_single_currency_exchange_returns_one(self, authenticated_client, currency_exchange_default):
         url = reverse('currencyexchange-list')
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 1
 
-    def test_list_currency_exchange_when_multiple_operations(
+    def test_list_currency_exchange_when_multiple_currency_exchanges_returns_all(
             self, 
             authenticated_client, 
             create_currency_exchange,
@@ -50,7 +58,7 @@ class TestCurrencyExchangeViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
 
-    def test_retrieve_currency_exchange(self, authenticated_client, currency_exchange_default):
+    def test_retrieve_currency_exchange_when_id_exists_returns_record(self, authenticated_client, currency_exchange_default):
         url = reverse('currencyexchange-detail', args=[currency_exchange_default.id])
         response = authenticated_client.get(url)
         
@@ -60,7 +68,19 @@ class TestCurrencyExchangeViewSet:
         assert response.data['target'] == currency_exchange_default.target.iso_code
         assert response.data['rate'] == f"{currency_exchange_default.rate:.6f}"
 
-    def test_upload_exchange_rates_success(self, authenticated_client, currency_usd, currency_eur, exchanges_csv):
+    def test_retrieve_currency_exchange_when_id_does_not_exist_returns_404(self, authenticated_client, currency_exchange_default):
+        url = reverse('currencyexchange-detail', args=[NON_EXISTING_ID])
+        response = authenticated_client.get(url)
+        
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_upload_currency_exchanges_success_returns_201(
+            self, 
+            authenticated_client, 
+            currency_usd, 
+            currency_eur, 
+            exchanges_csv):
+        
         url = reverse('currencyexchange-upload')
         data = {
             'origin': currency_usd.iso_code,
@@ -79,13 +99,21 @@ class TestCurrencyExchangeViewSet:
                               ("target"),
                               ("file")
                             ])
-    def test_upload_exchange_rates_missing_fields(self, authenticated_client, currency_usd, currency_eur, exchanges_csv, missing_field):
+    def test_upload_currency_exchanges_when_missing_fields_returns_400(
+        self, 
+        authenticated_client, 
+        currency_usd, 
+        currency_eur, 
+        exchanges_csv, 
+        missing_field):
+
         url = reverse('currencyexchange-upload')
         data = {
             'origin': currency_usd.iso_code,
             'target': currency_eur.iso_code,
             'file': exchanges_csv
         }
+        # deleting the field from `data`
         if missing_field == 'origin': 
             data.pop('origin')
         elif missing_field != 'target':
@@ -98,7 +126,12 @@ class TestCurrencyExchangeViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
 
-    def test_upload_exchange_rates_invalid_csv(self, authenticated_client, currency_usd, currency_eur):
+    def test_upload_currency_exchanges_when_invalid_csv_returns_400(
+            self, 
+            authenticated_client, 
+            currency_usd, 
+            currency_eur):
+        
         invalid_csv = SimpleUploadedFile(
             'rates.csv',
             b'Date,ExchangeRate\ninvalid_date,1.15',
@@ -121,7 +154,13 @@ class TestCurrencyExchangeViewSet:
                             [("origin"),
                               ("target")
                             ])
-    def test_upload_exchange_rates_invalid_currency(self, authenticated_client, currency_usd, exchanges_csv, invalid_currency: str):
+    def test_upload_currency_exchanges_when_invalid_currency_returns_404(
+        self, 
+        authenticated_client, 
+        currency_usd, 
+        exchanges_csv, 
+        invalid_currency: str):
+
         url = reverse('currencyexchange-upload')
         data = {
             'origin': 'BAD' if invalid_currency == "origin" else currency_usd.iso_code,
@@ -133,7 +172,11 @@ class TestCurrencyExchangeViewSet:
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_bulk_delete_exchange_rates_success(self, authenticated_client, create_currency_exchange):
+    def test_bulk_delete_currency_exchanges_when_success_returns_200(
+            self, 
+            authenticated_client, 
+            create_currency_exchange):
+        
         exchange1= create_currency_exchange()
         exchange2= create_currency_exchange(date= exchange1.date - timedelta(days=1))
         
@@ -146,7 +189,7 @@ class TestCurrencyExchangeViewSet:
         assert response.data['message'] == 'Successfully deleted 2 exchange rates'
         assert CurrencyExchange.objects.count() == 0
 
-    def test_bulk_delete_exchange_rates_missing_params(self, authenticated_client):
+    def test_bulk_delete_currency_exchanges_when_missing_params_returns_400(self, authenticated_client):
         url = reverse('currencyexchange-bulk-delete')
         response = authenticated_client.delete(url)
         
@@ -157,7 +200,12 @@ class TestCurrencyExchangeViewSet:
                             [("origin"),
                               ("target")
                             ])
-    def test_bulk_delete_exchange_rates_invalid_currency(self, authenticated_client, currency_usd, invalid_currency):
+    def test_bulk_delete_currency_exchanges_when_invalid_currency_returns_404(
+        self, 
+        authenticated_client, 
+        currency_usd, 
+        invalid_currency):
+
         origin = currency_usd.iso_code if invalid_currency != "origin" else 'BAD',
         target =  currency_usd.iso_code if invalid_currency != "target" else 'BAD',
         url = reverse('currencyexchange-bulk-delete')
