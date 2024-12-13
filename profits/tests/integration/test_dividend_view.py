@@ -1,7 +1,5 @@
 import pytest
 
-from datetime import datetime
-
 from django.urls import reverse
 
 from rest_framework import status
@@ -23,7 +21,7 @@ class TestDividendViewSet:
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data[0]['date'] == datetime.strftime(dividend_default.date, "%Y-%m-%d")
+        assert response.data[0]['date'] == dividend_default.date.date().isoformat()
         assert response.data[0]['ticker'] == dividend_default.ticker
         assert len(response.data) == 1
 
@@ -42,7 +40,7 @@ class TestDividendViewSet:
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['date'] == datetime.strftime(dividend_default.date, "%Y-%m-%d")
+        assert response.data['date'] == dividend_default.date.date().isoformat()
         assert response.data['ticker'] == dividend_default.ticker
         assert response.data['currency'] == dividend_default.currency.iso_code
         assert response.data['amount_total'] == f"{dividend_default.amount_total:.7f}"
@@ -71,3 +69,15 @@ class TestDividendViewSet:
         
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not Dividend.objects.filter(id=dividend_default.id).exists()
+
+    def test_update_dividend_when_called_returns_not_allowed(self, authenticated_client, dividend_default):
+        url = reverse('dividend-detail', args=[dividend_default.id])
+        response = authenticated_client.put(url)
+        
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_partial_update_dividend_when_called_returns_not_allowed(self, authenticated_client, dividend_default):
+        url = reverse('dividend-detail', args=[dividend_default.id])
+        response = authenticated_client.patch(url)
+        
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED

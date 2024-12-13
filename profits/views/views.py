@@ -3,8 +3,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 
-from profits.models import Broker, Currency, Dividend, Operation, Split
-from profits.serializers import BrokerSerializer, CurrencySerializer, DividendSerializer, OperationSerializer, SplitSerializer
+from profits.models import Broker, Currency, Dividend
+from profits.serializers import BrokerSerializer, CurrencySerializer, DividendSerializer
 from profits.views.base_view import BaseViewSet
 
 class BrokerViewSet(BaseViewSet):
@@ -13,7 +13,7 @@ class BrokerViewSet(BaseViewSet):
 
     def destroy(self, request, pk):
         broker= get_object_or_404(Broker, pk=pk)
-        if broker.account_set.exists():   # type: ignore
+        if broker.account_set.exists():   # type: ignore (ignoring Pylance warning as it does not get `broker.account_set` reference)
             return Response({'error': 'Broker cannot be deleted because record is associated with another table'}, 
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -26,7 +26,7 @@ class CurrencyViewSet(BaseViewSet):
 
     def destroy(self, request, pk):
         currency= get_object_or_404(Currency, pk=pk)
-        if (currency.origin_currencyexchange.exists() or  # type: ignore
+        if (currency.origin_currencyexchange.exists() or  # type: ignore (ignoring Pylance warning as this is fine.)
            currency.target_currencyexchange.exists() or   # type: ignore
            currency.dividend_set.exists() or    # type: ignore
            currency.operation_set.exists()):    # type: ignore
@@ -35,16 +35,7 @@ class CurrencyViewSet(BaseViewSet):
 
         currency.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-        
-class SplitViewSet(BaseViewSet):
-    queryset = Split.objects.all()
-    serializer_class = SplitSerializer
-
 
 class DividendViewSet(BaseViewSet):
     queryset = Dividend.objects.select_related('currency')
     serializer_class = DividendSerializer
-
-class OperationViewSet(BaseViewSet):
-    queryset = Operation.objects.select_related('currency')
-    serializer_class = OperationSerializer

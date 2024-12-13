@@ -74,7 +74,8 @@ class Operation(models.Model):
     date = models.DateTimeField()
     type = models.CharField(max_length=4, choices=TYPE_CHOICES)
     ticker = models.CharField(max_length=10)
-    quantity = models.DecimalField(max_digits=15, decimal_places=7) #Fractional shares require decimal_places
+    # Fractional shares require decimal_places
+    quantity = models.DecimalField(max_digits=15, decimal_places=7) 
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     amount_total = models.DecimalField(max_digits=17, decimal_places=7)
     # Currency exchange as provided by the broker at the time of the operation

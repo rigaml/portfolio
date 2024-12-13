@@ -80,7 +80,7 @@ To execute Django from VS Code follow this [configuration example](https://stack
 From bash command line:
 
 ```bash
-python manage.py test
+pytest
 ```
 
 If get test errors `connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refuse` make sure that the database is running.

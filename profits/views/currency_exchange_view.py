@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from io import StringIO
 import csv
 
@@ -23,7 +24,7 @@ class CurrencyExchangeViewSet(ReadOnlyModelViewSet):
     queryset = CurrencyExchange.objects.select_related('origin', 'target')
     serializer_class = CurrencyExchangeSerializer
 
-    pagination_class = DefaultPagination
+    # pagination_class = DefaultPagination
 
     # filter_backends = [DjangoFilterBackend]
     # filterset_class = CurrencyExchangeFilter
@@ -35,7 +36,7 @@ class CurrencyExchangeViewSet(ReadOnlyModelViewSet):
         Uplodad currency exchanges from a file:
         ```bash
         curl -H "Authorization: Token <admin_token>"  \
-             -X POST 127.0.0.1:8000/profits/currency-exchanges/upload/ \
+             -X POST 127.0.0.1:8000/profits/currency-exchange/upload/ \
              -F "file=@profits/data/currency_exchanges/bankofengland-gbp-eur.csv" \
              -F "origin=GBP" \
              -F "target=EUR"
@@ -45,11 +46,9 @@ class CurrencyExchangeViewSet(ReadOnlyModelViewSet):
         target_code = request.data.get('target')
         file = request.FILES.get("file")
 
-        # print(f"origin_code: {origin_code} target_code: {target_code}")
-
         if not all([origin_code, target_code, file]):
             return Response(
-                {"error": "`origin`, `target` and `file` are required fields"},
+                {"error": "`origin`, `target` and `file` are required parameters."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -64,7 +63,7 @@ class CurrencyExchangeViewSet(ReadOnlyModelViewSet):
             for row in csv_data:
                 try:
                     date = datetime.strptime(row["Date"], "%d %b %y").date()
-                    rate = float(row["ExchangeRate"])
+                    rate = Decimal(row["ExchangeRate"])
                 except (KeyError, ValueError) as e:
                     return Response(
                         {"error": f"Invalid row format or data: {row}, error: {str(e)}"},
@@ -76,7 +75,8 @@ class CurrencyExchangeViewSet(ReadOnlyModelViewSet):
             with transaction.atomic():
                 for date, rate in exchanges:
                     CurrencyExchange.objects.update_or_create(
-                        date=date, origin=origin, target=target,
+                        # parameters deciding if update or create are ones in `unique_together`
+                        date=date, origin=origin, target=target, 
                         defaults={"rate": rate},
                     )
 
@@ -87,20 +87,21 @@ class CurrencyExchangeViewSet(ReadOnlyModelViewSet):
         except Exception as e:
             return Response({
                 'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)        
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["delete"])
     def bulk_delete(self, request):
         """
         Delete all exchanges between two currencies
-        DELETE /profits/currency-exchanges/bulk_delete/?origin=GBP&target=EUR
+        curl -H "Authorization: Token <admin_token>"  \
+             -X DELETE 127.0.0.1:8000/profits/currency-exchange/bulk_delete/?origin=GBP&target=EUR    
         """
         origin_code = request.query_params.get('origin')
         target_code = request.query_params.get('target')
 
         if not all([origin_code, target_code]):
             return Response({
-                'error': '`origin` and `target` currencies query parameters are required'
+                'error': '`origin` and `target` currencies are required querystrings'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         origin = get_object_or_404(Currency, iso_code=origin_code)

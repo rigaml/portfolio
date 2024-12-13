@@ -13,7 +13,7 @@ from rest_framework.viewsets import ModelViewSet
 from profits.models import Account, Operation
 from profits.permissions import IsAdminOrReadOnly
 from profits.serializers import AccountSerializer
-
+from profits.utils import datetime_utils
 
 class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()
@@ -34,7 +34,7 @@ class AccountViewSet(ModelViewSet):
     @action(detail=True, methods=["get"], url_path='total')
     def total(self, request, pk=None):
         """
-        http://127.0.0.1:8000/profits/accounts/1/total?date_start=2023-01-01&date_end=2023-12-31
+        http://127.0.0.1:8000/profits/account/1/total?date_start=2023-01-01&date_end=2023-12-31
 
         """
         try:
@@ -62,10 +62,10 @@ class AccountViewSet(ModelViewSet):
         }
         return Response(data)
 
-    @action(detail=True, methods=["get"], url_path='operations-csv')
-    def operations_csv(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path='total-details')
+    def total_details(self, request, pk=None):
         """
-        http://127.0.0.1:8000/profits/accounts/1/operations-csv/?date_start=2022-01-01&date_end=2024-12-31
+        http://127.0.0.1:8000/profits/account/1/total-details/?date_start=2022-01-01&date_end=2024-12-31
         """
         try:
             account = self.get_object()
@@ -85,18 +85,21 @@ class AccountViewSet(ModelViewSet):
             operations = operations.filter(date__lte=make_aware(date_end))
 
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="operations_account_{pk}.csv"'
+        response['Content-Disposition'] = \
+            f'attachment; filename="totals-account-{pk}-from-{datetime_utils.to_filename(date_start)}-to-{datetime_utils.to_filename(date_end)}.csv"'
 
         writer = csv.writer(response)
         writer.writerow([
-            'Date', 'Type', 'Ticker', 'Quantity',
-            'Currency', 'Amount Total', 'Exchange'
+            'Date', 'Ticker', 'Quantity', 'Currency', 'Amount Total', 'Exchange'
         ])
         for operation in operations:
             writer.writerow([
-                operation.date, operation.type, operation.ticker,
-                operation.quantity, operation.currency.name,
-                operation.amount_total, operation.exchange
+                operation.date, 
+                operation.ticker,
+                operation.quantity, 
+                operation.currency.iso_code,
+                operation.amount_total, 
+                operation.exchange
             ])
 
         return response
