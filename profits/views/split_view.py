@@ -78,7 +78,8 @@ class SplitViewSet(BaseViewSet):
     def bulk_delete(self, request):
         """
         Delete all exchanges between two currencies
-        DELETE /profits/split/bulk_delete/
+        curl -H "Authorization: Token <admin_token>"  \
+             -X DELETE 127.0.0.1:8000/profits/split/bulk_delete/
         """
         deleted_count, _ = Split.objects.all().delete()
 

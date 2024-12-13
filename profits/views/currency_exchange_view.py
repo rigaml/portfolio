@@ -93,7 +93,8 @@ class CurrencyExchangeViewSet(ReadOnlyModelViewSet):
     def bulk_delete(self, request):
         """
         Delete all exchanges between two currencies
-        DELETE /profits/currency-exchange/bulk_delete/?origin=GBP&target=EUR
+        curl -H "Authorization: Token <admin_token>"  \
+             -X DELETE 127.0.0.1:8000/profits/currency-exchange/bulk_delete/?origin=GBP&target=EUR    
         """
         origin_code = request.query_params.get('origin')
         target_code = request.query_params.get('target')

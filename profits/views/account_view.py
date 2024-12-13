@@ -13,7 +13,7 @@ from rest_framework.viewsets import ModelViewSet
 from profits.models import Account, Operation
 from profits.permissions import IsAdminOrReadOnly
 from profits.serializers import AccountSerializer
-from profits.utils.string_utils import datetime_to_filename
+from profits.utils import datetime_utils
 
 class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()
@@ -85,18 +85,21 @@ class AccountViewSet(ModelViewSet):
             operations = operations.filter(date__lte=make_aware(date_end))
 
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="total-details-account-{pk}-{datetime_to_filename(date_start)}-{datetime_to_filename(date_end)}.csv"'
+        response['Content-Disposition'] = \
+            f'attachment; filename="totals-account-{pk}-from-{datetime_utils.to_filename(date_start)}-to-{datetime_utils.to_filename(date_end)}.csv"'
 
         writer = csv.writer(response)
         writer.writerow([
-            'Date', 'Ticker', 'Quantity',
-            'Currency', 'Amount Total', 'Exchange'
+            'Date', 'Ticker', 'Quantity', 'Currency', 'Amount Total', 'Exchange'
         ])
         for operation in operations:
             writer.writerow([
-                operation.date, operation.ticker,
-                operation.quantity, operation.currency.name,
-                operation.amount_total, operation.exchange
+                operation.date, 
+                operation.ticker,
+                operation.quantity, 
+                operation.currency.iso_code,
+                operation.amount_total, 
+                operation.exchange
             ])
 
         return response

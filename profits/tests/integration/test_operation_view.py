@@ -17,8 +17,8 @@ def operations_csv():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['Type', 'Date', 'Quantity', 'Ticker', 'Amount Total', 'Currency'])
-    writer.writerow(['BUY', '2023-06-01', 10, 'GOOG', 1000, 'USD'])
-    writer.writerow(['SELL', '2024-01-01', 10, 'GOOG', 2000, 'USD'])
+    writer.writerow(['BUY', '2023-06-01 10:11:12', 10, 'GOOG', 1000, 'USD'])
+    writer.writerow(['SELL', '2024-01-01 20:21:22', 10, 'GOOG', 2000, 'USD'])
     
     return SimpleUploadedFile(
         'operations.csv',

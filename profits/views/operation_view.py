@@ -1,4 +1,3 @@
-from datetime import datetime
 from io import StringIO
 from decimal import Decimal
 import csv
@@ -16,6 +15,7 @@ from profits.models import Account, Currency, Operation
 from profits.pagination import DefaultPagination
 from profits.permissions import IsAdminOrReadOnly
 from profits.serializers import OperationSerializer
+from profits.utils import datetime_utils
 from profits.views.base_view import BaseViewSet
 
 
@@ -35,9 +35,9 @@ class OperationViewSet(BaseViewSet):
         Uplodad a Csv file with operations for an account:
         ```bash
         curl -H "Authorization: Token <admin_token>"  \
-             -X POST 127.0.0.1:8000/profits/operation/upload/ \
-             -F "account_id=123" \
-             -F "file=@profits/data/operations/stock-operations-II.csv"
+            -X POST 127.0.0.1:8000/profits/operation/upload/ \
+            -F "account_id=<account_id>" \
+            -F "file=@profits/data/upload/stock-operations-II.csv"
         ```
         """
         account_id = request.data.get('account_id')
@@ -59,7 +59,7 @@ class OperationViewSet(BaseViewSet):
             for row in csv_data:
                 try:
                     type_op = row["Type"].upper()
-                    date = datetime.strptime(row["Date"], "%Y-%m-%d").date()
+                    date = datetime_utils.to_datetime_tz_aware(row["Date"])
                     quantity = Decimal(row["Quantity"])
                     ticker = row["Ticker"].upper()
                     price = Decimal(row.get("Price", 0))
@@ -97,7 +97,8 @@ class OperationViewSet(BaseViewSet):
     def bulk_delete(self, request):
         """
         Delete all operations for a specified account.
-        DELETE /profits/operation/bulk_delete/?account_id=123
+        curl -H "Authorization: Token <admin_token>"  \
+             -X DELETE 127.0.0.1:8000/profits/operation/bulk_delete/?account_id=<account_id>
         """
         account_id = request.query_params.get('account_id')
 
