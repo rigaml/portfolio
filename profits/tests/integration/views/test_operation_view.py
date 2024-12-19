@@ -55,9 +55,9 @@ class TestOperationViewSet:
             self, 
             authenticated_client, 
             create_operation,
-            date_factory):
+            create_date):
         create_operation()
-        create_operation(date=date_factory('2024-02-01'))
+        create_operation(date=create_date('2024-02-01'))
 
         url = reverse('operation-list')
         response = authenticated_client.get(url)
@@ -84,9 +84,9 @@ class TestOperationViewSet:
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_create_operation(self, authenticated_client, account_default, currency_gbp, operation_default, date_factory):
+    def test_create_operation(self, authenticated_client, account_default, currency_gbp, operation_default, create_date):
         url = reverse('operation-list')
-        date_create = date_factory('2024-02-01')
+        date_create = create_date('2024-02-01')
         data = {
             'account': account_default.id,
             'date': date_create,

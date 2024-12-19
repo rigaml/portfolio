@@ -48,9 +48,9 @@ class TestCurrencyExchangeViewSet:
             self, 
             authenticated_client, 
             create_currency_exchange,
-            date_factory):
+            create_date):
         create_currency_exchange()
-        create_currency_exchange(date=date_factory('2024-02-01'))
+        create_currency_exchange(date=create_date('2024-02-01'))
 
         url = reverse('currencyexchange-list')
         response = authenticated_client.get(url)
