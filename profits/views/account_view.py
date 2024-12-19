@@ -14,6 +14,7 @@ from profits.models import Account, Operation
 from profits.permissions import IsAdminOrReadOnly
 from profits.serializers import AccountSerializer
 from profits.utils import datetime_utils
+from profits.services.operation_service import get_total, get_total_details
 
 class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()
@@ -45,27 +46,23 @@ class AccountViewSet(ModelViewSet):
         date_start = request.query_params.get('date_start')
         date_end = request.query_params.get('date_end')
 
-        date_start = parse_datetime(date_start) if date_start else None
-        date_end = parse_datetime(date_end) if date_end else None
+        date_start = make_aware(parse_datetime(date_start)) if date_start else None
+        date_end = make_aware(parse_datetime(date_end)) if date_end else None
 
-        operations = Operation.objects.filter(account=account)
-        if date_start:
-            operations = operations.filter(date__gte=make_aware(date_start))
-        if date_end:
-            operations = operations.filter(date__lte=make_aware(date_end))
+        amount_total= get_total(account, date_start, date_end)
 
         data = {
             'id': account.id,
             'date_start': date_start,
             'date_end': date_end,
-            'amount_total': 10000
+            'amount_total': amount_total
         }
         return Response(data)
 
     @action(detail=True, methods=["get"], url_path='total-details')
     def total_details(self, request, pk=None):
         """
-        http://127.0.0.1:8000/profits/account/1/total-details/?date_start=2022-01-01&date_end=2024-12-31
+        http://127.0.0.1:8000/profits/account/1/total-details?date_start=2023-01-01&date_end=2023-12-31
         """
         try:
             account = self.get_object()
@@ -75,14 +72,10 @@ class AccountViewSet(ModelViewSet):
         date_start = request.query_params.get('date_start')
         date_end = request.query_params.get('date_end')
 
-        date_start = parse_datetime(date_start) if date_start else None
-        date_end = parse_datetime(date_end) if date_end else None
-
-        operations = Operation.objects.filter(account=account)
-        if date_start:
-            operations = operations.filter(date__gte=make_aware(date_start))
-        if date_end:
-            operations = operations.filter(date__lte=make_aware(date_end))
+        date_start = make_aware(parse_datetime(date_start)) if date_start else None
+        date_end = make_aware(parse_datetime(date_end)) if date_end else None
+        
+        operations = get_total_details(account, date_start, date_end)
 
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = \
@@ -90,7 +83,7 @@ class AccountViewSet(ModelViewSet):
 
         writer = csv.writer(response)
         writer.writerow([
-            'Date', 'Ticker', 'Quantity', 'Currency', 'Amount Total', 'Exchange'
+            'Date', 'Ticker', 'Quantity', 'Currency', 'Profit'
         ])
         for operation in operations:
             writer.writerow([
@@ -98,8 +91,7 @@ class AccountViewSet(ModelViewSet):
                 operation.ticker,
                 operation.quantity, 
                 operation.currency.iso_code,
-                operation.amount_total, 
-                operation.exchange
+                operation.amount_total
             ])
 
         return response

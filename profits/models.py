@@ -1,5 +1,5 @@
-from uuid import uuid4
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from portfolio import settings
 
@@ -9,11 +9,17 @@ class Broker(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self) -> str:
+        return self.name
+    
 class Currency(models.Model):
     iso_code = models.CharField(max_length=3, unique=True)
     description = models.CharField(max_length=255, unique=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.iso_code
     
 class CurrencyExchange(models.Model):
     date = models.DateField()
@@ -37,6 +43,17 @@ class Split(models.Model):
     class Meta:
         unique_together = ('date', 'ticker')
 
+    def clean(self):
+        super().clean()
+        if self.origin <= 0:
+            raise ValidationError({'origin': ['Origin number must be a positive number.']})
+        if self.target <= 0:
+            raise ValidationError({'target': ['Target number must be a positive number.']})
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)        
+
 class Dividend(models.Model):
     date = models.DateField()
     ticker = models.CharField(max_length=5)
@@ -47,6 +64,17 @@ class Dividend(models.Model):
 
     class Meta:
         unique_together = ('date', 'ticker')
+
+    def clean(self):
+        super().clean()
+        if not self.ticker.strip():
+            raise ValidationError({'ticker': ['Ticker must not be empty or just whitespace.']})
+        if self.amount_total <= 0:
+            raise ValidationError({'amount_total': ['Amount total must be a positive number.']})
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
 class Account(models.Model):
     
@@ -60,6 +88,9 @@ class Account(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self) -> str:
+        return self.broker.name + '/' + self.user_broker_ref
+    
     class Meta:
         unique_together = ('broker', 'user_broker_ref')    
 
