@@ -9,7 +9,7 @@ from profits.models import Account
 from profits.permissions import IsAdminOrReadOnly
 from profits.serializers import AccountSerializer
 from profits.utils import datetime_utils, csv_utils
-from profits.services.operation_service import get_total, get_total_details
+from profits.services.profit_service import get_total, get_total_details
 
 class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()

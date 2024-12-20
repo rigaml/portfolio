@@ -4,7 +4,7 @@ import pytest
 from datetime import datetime, timezone
 
 from profits.tests.conftest import create_date
-from profits.services.operation_service import get_total_details_ticker
+from profits.services.profit_service import get_total_details_ticker
 
 
 @pytest.mark.django_db
