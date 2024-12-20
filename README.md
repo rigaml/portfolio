@@ -10,6 +10,13 @@ A few years ago, I created a script to help me fill in my HMRC tax returns for s
 
 Given a list of stock operations within a portfolio account, this API calculates the profits and losses for the account over a specified period.
 
+## Future Improvements
+- Currency conversion to GBP (as this is for HMRC) to operation amounts.
+- Apply stocks splits to buy and sells when calculating profits.
+- Create deployment pipeline.
+- Add authorization.
+- Add parameter to request to get account total details to specify in which currency the profits should be displayed.
+
 ## Usage (local)
 
 ## Installation
