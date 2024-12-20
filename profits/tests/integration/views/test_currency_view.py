@@ -42,16 +42,16 @@ class TestCurrencyViewSet:
 
     def test_create_currency(self, authenticated_client):
         url = reverse('currency-list')
-        data = {
+        params = {
             'iso_code': 'EUR',
             'description': 'EUR'
         }
         
-        response = authenticated_client.post(url, data)
+        response = authenticated_client.post(url, params)
         
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data['iso_code'] == data['iso_code']
-        assert response.data['description'] == data['description']
+        assert response.data['iso_code'] == params['iso_code']
+        assert response.data['description'] == params['description']
         assert Currency.objects.count() == 1
 
     def test_delete_currency_when_has_no_entities_linked(self, authenticated_client, currency_gbp):

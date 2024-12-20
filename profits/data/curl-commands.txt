@@ -1,0 +1,17 @@
+## Upload currency exchanges
+curl -X POST 127.0.0.1:8000/profits/currency-exchange/upload/ \
+    -F "file=@profits/data/upload/bankofengland-gbp-usd.csv" \
+    -F "origin=GBP" \
+    -F "target=USD"
+
+## Upload Splits
+curl -X POST 127.0.0.1:8000/profits/split/upload/ \
+    -F "file=@profits/data/upload/tax_splits.csv"
+
+## Upload operations
+curl -X POST 127.0.0.1:8000/profits/operation/upload/ \
+    -F "account_id=1" \
+    -F "file=@profits/data/upload/stock-operations-II.csv"
+
+## Delete all operations
+curl -X DELETE 127.0.0.1:8000/profits/operation/bulk_delete/?account_id=1

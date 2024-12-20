@@ -67,20 +67,20 @@ class TestSplitViewSet:
 
     def test_create_split(self, authenticated_client):
         url = reverse('split-list')
-        data = {
+        params = {
             'date': '2023-01-01',
             'ticker': 'AMZN',
             'origin': 1.0,
             'target': 10.0
         }
         
-        response = authenticated_client.post(url, data)
+        response = authenticated_client.post(url, params)
         
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data['date'] == data['date']
-        assert response.data['ticker'] == data['ticker']
-        assert response.data['origin'] == f"{data['origin']:.2f}"
-        assert response.data['target'] == f"{data['target']:.2f}"
+        assert response.data['date'] == params['date']
+        assert response.data['ticker'] == params['ticker']
+        assert response.data['origin'] == f"{params['origin']:.2f}"
+        assert response.data['target'] == f"{params['target']:.2f}"
         assert Split.objects.count() == 1
 
     def test_delete_split(self, authenticated_client, split_default):
@@ -104,11 +104,11 @@ class TestSplitViewSet:
 
     def test_upload_splits_success(self, authenticated_client, splits_csv):
         url = reverse('split-upload')
-        data = {
+        params = {
             'file': splits_csv
         }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['message'] == 'Successfully imported 2 splits'
@@ -117,9 +117,9 @@ class TestSplitViewSet:
 
     def test_upload_splits_missing_fields(self, authenticated_client, splits_csv):
         url = reverse('split-upload')
-        data = { }
+        params = { }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
@@ -132,11 +132,11 @@ class TestSplitViewSet:
         )
         
         url = reverse('split-upload')
-        data = {
+        params = {
             'file': invalid_csv
         }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data

@@ -48,9 +48,9 @@ class TestCurrencyExchangeViewSet:
             self, 
             authenticated_client, 
             create_currency_exchange,
-            date_factory):
+            create_date):
         create_currency_exchange()
-        create_currency_exchange(date=date_factory('2024-02-01'))
+        create_currency_exchange(date=create_date('2024-02-01'))
 
         url = reverse('currencyexchange-list')
         response = authenticated_client.get(url)
@@ -82,13 +82,13 @@ class TestCurrencyExchangeViewSet:
             exchanges_csv):
         
         url = reverse('currencyexchange-upload')
-        data = {
+        params = {
             'origin': currency_usd.iso_code,
             'target': currency_eur.iso_code,
             'file': exchanges_csv
         }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['message'] == 'Successfully imported 2 exchange rates'
@@ -108,20 +108,20 @@ class TestCurrencyExchangeViewSet:
         missing_field):
 
         url = reverse('currencyexchange-upload')
-        data = {
+        params = {
             'origin': currency_usd.iso_code,
             'target': currency_eur.iso_code,
             'file': exchanges_csv
         }
         # deleting the field from `data`
         if missing_field == 'origin': 
-            data.pop('origin')
+            params.pop('origin')
         elif missing_field != 'target':
-            data.pop('target')
+            params.pop('target')
         elif missing_field != 'file':
-            data.pop('file')
+            params.pop('file')
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
@@ -139,13 +139,13 @@ class TestCurrencyExchangeViewSet:
         )
         
         url = reverse('currencyexchange-upload')
-        data = {
+        params = {
             'origin': currency_usd.iso_code,
             'target': currency_eur.iso_code,
             'file': invalid_csv
         }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
@@ -162,13 +162,13 @@ class TestCurrencyExchangeViewSet:
         invalid_currency: str):
 
         url = reverse('currencyexchange-upload')
-        data = {
+        params = {
             'origin': 'BAD' if invalid_currency == "origin" else currency_usd.iso_code,
             'target': 'BAD' if invalid_currency == "target" else currency_usd.iso_code,
             'file': exchanges_csv
         }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
