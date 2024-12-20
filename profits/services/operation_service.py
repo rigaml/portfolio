@@ -52,45 +52,72 @@ def get_account_tickers_sold_period(account: Account, date_start: Optional[datet
 
     return list(operations)
 
-def get_account_ticker_operations(account: Account, date_end: Optional[datetime]) -> list[Operation]:
-    operations = Operation.objects.filter(account=account)
+def get_account_ticker_operations(account: Account, ticker_sold: str, date_end: Optional[datetime]) -> list[Operation]:
+    operations = Operation.objects.filter(account=account).filter(ticker=ticker_sold)
     if date_end:
         operations = operations.filter(date__lte=date_end)
 
-    operations = operations.order_by('date')
+    operations = operations.order_by('date', 'type')  # Order also by type so 'BUY' comes before 'SELL'
 
     return list(operations)
 
-def get_total_details_ticker(ticker_operations: list[Operation]) -> list[dict]:
-    ticker_buys = []
-    ticker_profits = []
-    for ticker_operation in ticker_operations:
-        if ticker_operation.type == 'BUY':
-            ticker_buys.append(
-                {
-                    'date': ticker_operation.date,
-                    'quantity': ticker_operation.quantity,
-                    'amount_total': ticker_operation.amount_total
-                }
-            )
-        else:
-            if len(ticker_buys) > 0:
-                ticker_profits.append(
-                    {
-                        'date': ticker_operation.date,
-                        'quantity': ticker_operation.quantity,
-                        'amount_total': ticker_operation.amount_total,
-                        'currency': ticker_operation.currency.iso_code,
-                        'buy_date': ticker_buys[0]['date'],
-                        'buy_quantity': ticker_buys[0]['quantity'],
-                        'buy_amount_total': ticker_buys[0]['amount_total'],
-                        'profit': ticker_operation.amount_total - ticker_buys[0]['amount_total']
-                    }
-                )
-            else:
-                raise Exception(f'No buy for ticker {ticker_operation.ticker} on date {ticker_operation.date}')
+def add_profit_line(sell_quantity_line: int, sell: dict, buy: dict, profits: list[dict]):
+    profits.append(
+        {
+            'sell_date': sell['date'],
+            'sell_quantity': sell_quantity_line,
+            'sell_amount_total': sell_quantity_line * sell['price_avg'],
+            'sell_currency': sell['currency'],
+            'buy_date': buy['date'],
+            'buy_amount_total': sell_quantity_line * buy['price_avg'],
+            'buy_currency': buy['currency'],
+            'profit': sell_quantity_line * (sell['price_avg'] - buy['price_avg'])
+        }
+    )
 
-    return ticker_profits
+def add_profit_lines(sell_left: dict, buys: list[dict], buys_used_index: int, profits: list[dict]):
+    while sell_left['quantity'] > 0 and buys_used_index < len(buys):
+        if buys[buys_used_index]['quantity'] > sell_left['quantity']:
+            sell_quantity_line = sell_left['quantity']
+            sell_left['quantity'] = 0
+            buys[buys_used_index]['quantity'] -= sell_quantity_line
+
+            add_profit_line(sell_quantity_line, sell_left, buys[buys_used_index], profits)
+        else:
+            sell_quantity_line = buys[buys_used_index]['quantity']
+            sell_left['quantity'] -= sell_quantity_line
+            buys[buys_used_index]['quantity'] = 0
+
+            add_profit_line(sell_quantity_line, sell_left, buys[buys_used_index], profits)
+            buys_used_index += 1
+    
+    if sell_left['quantity'] > 0:
+        raise ValueError(f'There are {sell_left["quantity"]} sells left on date {sell_left["date"]} but no buys.')
+
+def create_operation_tracker(ticker_operation: Operation) -> dict:
+    return {
+        'date': ticker_operation.date,
+        'quantity': ticker_operation.quantity,
+        'currency': ticker_operation.currency.iso_code,
+        'price_avg': ticker_operation.amount_total / ticker_operation.quantity
+    }
+
+def get_total_details_ticker(ticker_operations: list[Operation]) -> list[dict]:
+    buys = []
+    profits = []
+    buys_used_index = 0
+    
+    for ticker_operation in ticker_operations:
+        ticker_counter= create_operation_tracker(ticker_operation)
+        if ticker_operation.type == 'BUY':
+            buys.append(ticker_counter)
+        else:
+            try:
+                add_profit_lines(ticker_counter, buys, buys_used_index, profits)
+            except ValueError as e:
+                raise ValueError(f'For ticker {ticker_operation.ticker} there is error: {e}') from e
+
+    return profits
 
 def get_total_details(account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> list[dict]:
     
@@ -100,7 +127,7 @@ def get_total_details(account: Account, date_start: Optional[datetime], date_end
         if is_currency_conversion(ticker_sold):
             continue
 
-        ticker_operations= get_account_ticker_operations(account, date_end)
+        ticker_operations= get_account_ticker_operations(account, ticker_sold, date_end)
         
         ticker_profits = get_total_details_ticker(ticker_operations)
 
