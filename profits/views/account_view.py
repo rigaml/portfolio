@@ -49,13 +49,13 @@ class AccountViewSet(ModelViewSet):
 
         amount_total= get_total(account, date_start, date_end)
 
-        data = {
+        params = {
             'id': account.id,
             'date_start': date_start,
             'date_end': date_end,
             'amount_total': amount_total
         }
-        return Response(data)
+        return Response(params)
 
 
     @action(detail=True, methods=["get"], url_path='total-details')
@@ -78,6 +78,4 @@ class AccountViewSet(ModelViewSet):
             return Response({"error": f"Invalid date format `{date_start}` or `{date_end}`."}, status=400)
         
         tickers_profit = get_total_details(account, date_start, date_end)
-
-        print(f"tickers_profit:{tickers_profit}")  # Debug data_row
         return csv_utils.generate_total_details_csv(tickers_profit, account.id, date_start, date_end)

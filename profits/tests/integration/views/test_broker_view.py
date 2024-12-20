@@ -45,16 +45,16 @@ class TestBrokerViewSet:
 
     def test_create_broker(self, authenticated_client):
         url = reverse('broker-list')
-        data = {
+        params = {
             'name': 'BRU',
             'full_name': 'Test Broker 2'
         }
         
-        response = authenticated_client.post(url, data)
+        response = authenticated_client.post(url, params)
         
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data['name'] == data['name']
-        assert response.data['full_name'] == data['full_name']
+        assert response.data['name'] == params['name']
+        assert response.data['full_name'] == params['full_name']
         assert Broker.objects.count() == 1
 
     def test_delete_broker_when_has_entities_linked(self, authenticated_client, broker_default):

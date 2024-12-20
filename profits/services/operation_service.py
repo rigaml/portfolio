@@ -93,6 +93,7 @@ def get_total_details_ticker(ticker_operations: list[Operation]) -> list[dict]:
     return ticker_profits
 
 def get_total_details(account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> list[dict]:
+    
     account_tickers_sold = get_account_tickers_sold_period(account, date_start, date_end)
     tickers_profit = []
     for ticker_sold in account_tickers_sold:

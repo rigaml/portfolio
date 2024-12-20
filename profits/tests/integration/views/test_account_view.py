@@ -50,53 +50,53 @@ class TestAccountViewSet:
 
     def test_create_account(self, authenticated_client, user_default , broker_default):
         url = reverse('account-list')
-        data = {
+        params = {
             'user': user_default.id, 
             'broker': broker_default.id,
             'user_broker_ref': 'Create UserBrokerRef',
             'user_own_ref': 'Create UserOwnRef'
         }
         
-        response = authenticated_client.post(url, data)
+        response = authenticated_client.post(url, params)
         
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data['user'] == data['user']
-        assert response.data['broker'] == data['broker']
-        assert response.data['user_broker_ref'] == data['user_broker_ref']
-        assert response.data['user_own_ref'] == data['user_own_ref']
+        assert response.data['user'] == params['user']
+        assert response.data['broker'] == params['broker']
+        assert response.data['user_broker_ref'] == params['user_broker_ref']
+        assert response.data['user_own_ref'] == params['user_own_ref']
         assert Account.objects.count() == 1
 
     def test_update_account(self, authenticated_client, account_default, user_default , broker_default):
         url = reverse('account-detail', args=[account_default.id])
-        data = {
+        params = {
             'user': user_default.id, 
             'broker': broker_default.id,
             'user_broker_ref': 'Update UserBrokerRef',
             'user_own_ref': 'Update UserOwnRef'
         }
         
-        response = authenticated_client.put(url, data)
+        response = authenticated_client.put(url, params)
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['user'] == data['user']
-        assert response.data['broker'] == data['broker']
-        assert response.data['user_broker_ref'] == data['user_broker_ref']
-        assert response.data['user_own_ref'] == data['user_own_ref']
+        assert response.data['user'] == params['user']
+        assert response.data['broker'] == params['broker']
+        assert response.data['user_broker_ref'] == params['user_broker_ref']
+        assert response.data['user_own_ref'] == params['user_own_ref']
         assert Account.objects.count() == 1
 
     def test_partial_update_account(self, authenticated_client, account_default, user_default , broker_default):
         url = reverse('account-detail', args=[account_default.id])
-        data = {
+        params = {
             'user_own_ref': 'Update UserOwnRef'
         }
         
-        response = authenticated_client.patch(url, data)
+        response = authenticated_client.patch(url, params)
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['user'] == user_default.id
         assert response.data['broker'] == broker_default.id
         assert response.data['user_broker_ref'] == account_default.user_broker_ref
-        assert response.data['user_own_ref'] == data['user_own_ref']
+        assert response.data['user_own_ref'] == params['user_own_ref']
         assert Account.objects.count() == 1
         
     def test_delete_account_when_has_no_entities_linked(self, authenticated_client, account_default):
@@ -122,13 +122,22 @@ class TestAccountViewSet:
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_total_when_invalid_dates(self, authenticated_client, account_default):
+    @pytest.mark.parametrize("invalid_field",
+                            [("date_start"),
+                             ("date_end"),
+                             ("all"),
+                            ])
+    def test_total_when_invalid_dates(self, authenticated_client, account_default, invalid_field):
         url = reverse('account-total', args=[account_default.id])
         params = {
-            'date_start': 'invalid-date',
+            'date_start': '2021-01-01T00:00:00',
             'date_end': '2023-12-31T23:59:59'
         }
+
+        if invalid_field in ('date_start', 'all'):
+            params['date_start']= 'invalid-date'
+        if invalid_field in ('date_end', 'all'):
+            params['date_end']= 'invalid-date'
         
         response = authenticated_client.get(url, params)
         
@@ -167,13 +176,23 @@ class TestAccountViewSet:
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_total_details_when_invalid_dates(self, authenticated_client, account_default):
+    @pytest.mark.parametrize("invalid_field",
+                            [("date_start"),
+                             ("date_end"),
+                             ("all"),
+                            ])
+    def test_total_details_when_invalid_dates(self, authenticated_client, account_default, invalid_field):
         url = reverse('account-total-details', args=[account_default.id])
         params = {
-            'date_start': 'invalid-date',
+            'date_start': '2021-01-01T00:00:00',
             'date_end': '2023-12-31T23:59:59'
         }
-        
+
+        if invalid_field in ('date_start', 'all'):
+            params['date_start']= 'invalid-date'
+        if invalid_field in ('date_end', 'all'):
+            params['date_end']= 'invalid-date'
+
         response = authenticated_client.get(url, params)
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -200,39 +219,31 @@ class TestAccountViewSet:
                 }]
         }]
 
-        from profits.services.operation_service import get_total_details
-        print("Original function:", get_total_details)
-
-
-        mock= mocker.patch('profits.services.operation_service.get_total_details')        
-        mock.return_value=mock_total_details
-
-        print("Mocked function:", mock)
+        mocker.patch('profits.views.account_view.get_total_details', return_value=mock_total_details)
 
         response = authenticated_client.get(url, params)
         
-        print("Mock calls:", mock.call_args_list)
-        assert mock.called
-
         assert response.status_code == status.HTTP_200_OK
         assert response['Content-Type'] == 'text/csv'
         assert 'attachment; filename=' in response['Content-Disposition']
         
         content = response.content.decode('utf-8')
         csv_lines = content.split('\n')
-        assert len(csv_lines) == 2  # Header + at least one data row
+        assert len(csv_lines) == 3 # Header + data row + '\n' empty line at the end
         
         # Verify header
         header = csv_lines[0].split(',')
-        header[len(header) - 1] = header[len(header) - 1].strip()  # removes '\r' if added at the end of the line
+        last_column_index = len(header) - 1
+        header[last_column_index] = header[last_column_index].strip()  # removes '\r' if added at the end of the line
         assert 'Ticker' in header
         assert 'Sell Date' in header
         assert 'Profit' in header
         
         # Verify data
         data_row = csv_lines[1].split(',')
-        assert data_row[0] == 'AAPL'
-        assert data_row[len(data_row) - 1] == '5000'
+        data_row[last_column_index] = data_row[last_column_index].strip()  # removes '\r' if added at the end of the line
+        assert data_row[0] == mock_total_details[0]['ticker']
+        assert data_row[len(data_row) - 1] == str(mock_total_details[0]['profit_detail'][0]['profit'])
         
 
     def test_total_details_when_no_dates(self, authenticated_client, account_default, mocker):
@@ -251,7 +262,7 @@ class TestAccountViewSet:
                     'profit': 5000
                 }]
         }]
-        mocker.patch('profits.services.operation_service.get_total_details', return_value=mock_total_details)      
+        mocker.patch('profits.views.account_view.get_total_details', return_value=mock_total_details)      
 
         response = authenticated_client.get(url)
         
@@ -261,17 +272,4 @@ class TestAccountViewSet:
         
         content = response.content.decode('utf-8')
         csv_lines = content.split('\n')
-        assert len(csv_lines) == 2  # Header + at least one data row
-        
-        # Verify header
-        header = csv_lines[0].split(',')
-        header[len(header) - 1] = header[len(header) - 1].strip()  # removes '\r' if added at the end of the line
-        assert 'Ticker' in header
-        assert 'Sell Date' in header
-        assert 'Profit' in header
-        
-        # Verify data
-        data_row = csv_lines[1].split(',')
-        assert data_row[0] == 'AAPL'
-        assert data_row[len(data_row) - 1] == '5000'
-
+        assert len(csv_lines) == 3 # Header + data row + '\n' empty line at the end

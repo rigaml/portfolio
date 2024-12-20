@@ -47,20 +47,20 @@ class TestDividendViewSet:
 
     def test_create_dividend(self, authenticated_client, currency_gbp):
         url = reverse('dividend-list')
-        data = {
+        params = {
             'date': '2023-01-01',
             'ticker': 'AMZN',
             'currency': currency_gbp.iso_code, 
             'amount_total': 10.0
         }
         
-        response = authenticated_client.post(url, data)
+        response = authenticated_client.post(url, params)
         
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data['date'] == data['date']
-        assert response.data['ticker'] == data['ticker']
-        assert response.data['currency'] == data['currency']
-        assert response.data['amount_total'] == f"{data['amount_total']:.7f}"
+        assert response.data['date'] == params['date']
+        assert response.data['ticker'] == params['ticker']
+        assert response.data['currency'] == params['currency']
+        assert response.data['amount_total'] == f"{params['amount_total']:.7f}"
         assert Dividend.objects.count() == 1
 
     def test_delete_dividend(self, authenticated_client, dividend_default):

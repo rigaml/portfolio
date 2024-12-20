@@ -87,7 +87,7 @@ class TestOperationViewSet:
     def test_create_operation(self, authenticated_client, account_default, currency_gbp, operation_default, create_date):
         url = reverse('operation-list')
         date_create = create_date('2024-02-01')
-        data = {
+        params = {
             'account': account_default.id,
             'date': date_create,
             'type': operation_default.TYPE_CHOICES[0][0],
@@ -98,16 +98,16 @@ class TestOperationViewSet:
             'exchange': 1
         }
         
-        response = authenticated_client.post(url, data)
+        response = authenticated_client.post(url, params)
         
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['date'] == date_create.isoformat().replace('+00:00', 'Z')
-        assert response.data['type'] == data['type']
-        assert response.data['ticker'] == data['ticker']
-        assert response.data['quantity'] == f"{data['quantity']:.7f}"
-        assert response.data['currency'] == data['currency']
-        assert response.data['amount_total'] == f"{data['amount_total']:.7f}"
-        assert response.data['exchange'] == f"{data['exchange']:.6f}"
+        assert response.data['type'] == params['type']
+        assert response.data['ticker'] == params['ticker']
+        assert response.data['quantity'] == f"{params['quantity']:.7f}"
+        assert response.data['currency'] == params['currency']
+        assert response.data['amount_total'] == f"{params['amount_total']:.7f}"
+        assert response.data['exchange'] == f"{params['exchange']:.6f}"
         assert Operation.objects.count() == 2
 
     def test_delete_operation_when_has_no_entities_linked(self, authenticated_client, operation_default):
@@ -134,12 +134,12 @@ class TestOperationViewSet:
         Passing parameter `currency_usd` executes the fixture and creates the value in DB.
         """
         url = reverse('operation-upload')
-        data = {
+        params = {
             'account_id': account_default.id,
             'file': operations_csv
         }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['message'] == 'Successfully imported 2 operations'
@@ -151,16 +151,16 @@ class TestOperationViewSet:
                             ])
     def test_upload_operations_missing_fields(self, authenticated_client, account_default, operations_csv, missing_field):
         url = reverse('operation-upload')
-        data = {
+        params = {
             'account_id': account_default.id,
             'file': operations_csv
         }
         if missing_field == 'account_id': 
-            data.pop('account_id')
+            params.pop('account_id')
         elif missing_field != 'file':
-            data.pop('file')
+            params.pop('file')
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
@@ -173,24 +173,24 @@ class TestOperationViewSet:
         )
         
         url = reverse('operation-upload')
-        data = {
+        params = {
             'account_id': account_default.id,
             'file': invalid_csv
         }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
 
     def test_upload_operations_invalid_account_id(self, authenticated_client, account_default, operations_csv):
         url = reverse('operation-upload')
-        data = {
+        params = {
             'account_id': account_default.id + 1,
             'file': operations_csv
         }
         
-        response = authenticated_client.post(url, data, format='multipart')
+        response = authenticated_client.post(url, params, format='multipart')
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
