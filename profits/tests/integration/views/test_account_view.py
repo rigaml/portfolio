@@ -208,13 +208,13 @@ class TestAccountViewSet:
         mock_total_details = [{
                 'ticker': 'AAPL',
                 'profit_detail': [{
-                    'date': '2023-06-01',
-                    'quantity': 100,
-                    'amount_total': 15000,
-                    'currency': 'USD',
+                    'sell_date': '2023-06-01',
+                    'sell_quantity': 100,
+                    'sell_amount_total': 15000,
+                    'sell_currency': 'USD',
                     'buy_date': '2023-01-15',
-                    'buy_quantity': 100,
                     'buy_amount_total': 10000,
+                    'buy_currency': 'USD',
                     'profit': 5000
                 }]
         }]
@@ -252,13 +252,13 @@ class TestAccountViewSet:
         mock_total_details = [{
                 'ticker': 'AAPL',
                 'profit_detail': [{
-                    'date': '2023-06-01',
-                    'quantity': 100,
-                    'amount_total': 15000,
-                    'currency': 'USD',
+                    'sell_date': '2023-06-01',
+                    'sell_quantity': 100,
+                    'sell_amount_total': 15000,
+                    'sell_currency': 'USD',
                     'buy_date': '2023-01-15',
-                    'buy_quantity': 100,
                     'buy_amount_total': 10000,
+                    'buy_currency': 'USD',
                     'profit': 5000
                 }]
         }]
