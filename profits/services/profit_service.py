@@ -8,6 +8,9 @@ from profits.services.operation_service import get_account_ticker_operations, ge
 from profits.services.operation_tracker import OperationTracker
 
 def get_total(account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> Decimal:
+    """
+    TODO: refactor logic to base return on results from 'get_total_details'
+    """
     operations = Operation.objects.filter(account=account)
     if date_start:
         operations = operations.filter(date__gte=date_start)
@@ -24,7 +27,7 @@ def get_total(account: Account, date_start: Optional[datetime], date_end: Option
 
     return amount_total
 
-def add_profit_line(sell_quantity_line: int, sell: OperationTracker, buy: OperationTracker, profits: list[dict]):
+def add_profit_line(sell_quantity_line: Decimal, sell: OperationTracker, buy: OperationTracker, profits: list[dict]):
     profits.append(
         {
             'sell_date': sell.date,
@@ -42,20 +45,20 @@ def add_profit_lines(sell_left: OperationTracker, buys: list[OperationTracker], 
     while sell_left.quantity > 0 and buys_used_index < len(buys):
         if buys[buys_used_index].quantity > sell_left.quantity:
             sell_quantity_line = sell_left.quantity
-            sell_left.quantity = 0
+            sell_left.quantity = Decimal(0)
             buys[buys_used_index].quantity -= sell_quantity_line
 
             add_profit_line(sell_quantity_line, sell_left, buys[buys_used_index], profits)
         else:
             sell_quantity_line = buys[buys_used_index].quantity
             sell_left.quantity -= sell_quantity_line
-            buys[buys_used_index].quantity = 0
+            buys[buys_used_index].quantity = Decimal(0)
 
             add_profit_line(sell_quantity_line, sell_left, buys[buys_used_index], profits)
             buys_used_index += 1
     
     if sell_left.quantity > 0:
-        raise ValueError(f'On date {sell_left["date"]} there are {sell_left["quantity"]} stocks left to sell without corresponding buys.')
+        raise ValueError(f'On date {sell_left.date} there are {sell_left.quantity} stocks left to sell without corresponding buys.')
 
 def create_operation_tracker(ticker_operation: Operation) -> OperationTracker:
     return OperationTracker(

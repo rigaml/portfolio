@@ -4,6 +4,9 @@ from profits.models import Account, Operation
 
 
 def get_account_tickers_sold_period(account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> list[str]:
+    """
+    Returns the list of tickers that were sold within the given time period for the given account.
+    """
     operations = Operation.objects.filter(account=account)
     if date_start:
         operations = operations.filter(date__gte=date_start)
