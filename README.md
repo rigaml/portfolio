@@ -42,7 +42,7 @@ poetry add psycopg2-binary
 Installing Postgres in Ubuntu
 
 ```bash
-    sudo apt install postgresql postgresql-contrib libpq-dev
+sudo apt install postgresql postgresql-contrib libpq-dev
 ```
 
 Start PostgreSQL service
