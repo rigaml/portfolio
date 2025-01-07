@@ -10,7 +10,7 @@ from profits.services.profit_service import get_total_details_ticker
 
 
 @pytest.mark.django_db
-class TestGeTotalDetailsTicker:
+class TestGetTotalDetailsTicker:
     def test_when_no_operations_then_returns_empty_list(self):
         ticker_operations = []
 
