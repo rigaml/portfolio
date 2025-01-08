@@ -84,10 +84,10 @@ To execute Django from VS Code follow this [configuration example](https://stack
 
 #### Run tests
 
-From bash command line execute command below pointing to local environment:
+If from bash execute command below will run test pointing to local environment:
 
 ```bash
-ENV_PATH=env/.env.local pytest
+pytest
 ```
 
 or for other environments
