@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 
-from portfolio import settings
+from django.conf import settings
 
 class Broker(models.Model):
     name = models.CharField(max_length=10, unique=True)

@@ -12,6 +12,7 @@ djangorestframework = "^3.15.2"
 psycopg2-binary = "^2.9.10"
 drf-nested-routers = "^0.94.1"
 django-filter = "^24.3"
+python-dotenv = "^1.0.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -28,7 +29,6 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "portfolio.settings"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 addopts = ["--strict-markers", "--tb=short", "--reuse-db"]
 
