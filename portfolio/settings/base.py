@@ -12,24 +12,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Internally used by Django to locate project files. Should point to root of project, where manage.py is located
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&!2a^)8p7i#5*422cvyo5$vwk91)_wy&ri&%+q23oe_^#m899p'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'testserver'
-]
-
+# Execute `python manage.py check` to BASE_DIR is correct
+#print(f"manage.py exists: {(BASE_DIR / 'manage.py').exists()}")
 
 # Application definition
 
@@ -40,7 +27,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'debug_toolbar',
     'rest_framework',
     # core: shared functionality for different apps
     'core',
@@ -49,7 +35,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,10 +56,6 @@ MIDDLEWARE = [
 #     ],
 # }
 
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
-
 ROOT_URLCONF = 'portfolio.urls'
 
 TEMPLATES = [
@@ -94,21 +75,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'portfolio.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'portfoliodb',
-        'USER': 'portfoliouser',
-        'PASSWORD': 'dummypassword',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
 
 
 # Password validation
