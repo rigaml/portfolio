@@ -9,7 +9,7 @@ from profits.models import Account
 from profits.permissions import IsAdminOrReadOnly
 from profits.serializers import AccountSerializer
 from profits.utils import datetime_utils, csv_utils
-from profits.services.profit_service import get_total, get_total_details
+from profits.services.profit_service import ProfitService
 
 class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()
@@ -47,7 +47,11 @@ class AccountViewSet(ModelViewSet):
         except ValueError:
             return Response({"error": f"Invalid date format `{date_start}` or `{date_end}`."}, status=400)
 
-        amount_total= get_total(account, date_start, date_end)
+        profile_service = ProfitService()
+        try:
+            amount_total= profile_service.get_total(account, date_start, date_end)
+        except Exception:
+            return Response({"error": f"There was an error calculating total amount for account {account} between dates `{date_start}` or `{date_end}`."}, status=400)
 
         params = {
             'id': account.id,
@@ -77,5 +81,10 @@ class AccountViewSet(ModelViewSet):
         except ValueError:
             return Response({"error": f"Invalid date format `{date_start}` or `{date_end}`."}, status=400)
         
-        tickers_profit = get_total_details(account, date_start, date_end)
+        profile_service = ProfitService()
+        try:
+            tickers_profit = profile_service.get_total_details(account, date_start, date_end)
+        except Exception:
+            return Response({"error": f"There was an error calculating total details for account {account} between dates `{date_start}` or `{date_end}`."}, status=400)
+
         return csv_utils.generate_total_details_csv(tickers_profit, account.id, date_start, date_end)

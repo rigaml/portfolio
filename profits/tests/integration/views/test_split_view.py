@@ -3,8 +3,6 @@ import pytest
 import io
 import csv
 
-from datetime import datetime
-
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 

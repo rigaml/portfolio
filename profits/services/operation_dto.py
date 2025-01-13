@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import datetime
 
 @dataclass
-class OperationTracker:
+class OperationDTO:
     date: datetime
     quantity: Decimal
     currency: str
