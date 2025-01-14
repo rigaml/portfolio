@@ -199,28 +199,41 @@ class TestAccountViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
 
-    def test_total_details_when_valid_parameters(self, authenticated_client, account_default, mocker):
+    def test_total_details_when_valid_parameters(
+            self, 
+            authenticated_client, 
+            account_default, 
+            create_operation,
+            create_date,
+            currency_usd):
+        
         url = reverse('account-total-details', args=[account_default.id])
         params = {
             'date_start': '2021-01-01T00:00:00',
             'date_end': '2025-12-31T23:59:59'
         }
 
-        mock_total_details = [{
-                'ticker': 'AAPL',
-                'profit_detail': [{
-                    'sell_date': '2023-06-01',
-                    'sell_quantity': 100,
-                    'sell_amount_total': 15000,
-                    'sell_currency': 'USD',
-                    'buy_date': '2023-01-15',
-                    'buy_amount_total': 10000,
-                    'buy_currency': 'USD',
-                    'profit': 5000
-                }]
-        }]
-
-        mocker.patch('profits.views.account_view.get_total_details', return_value=mock_total_details)
+        buy_operation = create_operation(
+            account=account_default,
+            type='BUY',
+            date=create_date('2023-01-15'),
+            ticker='AAPL',
+            quantity=Decimal('100'),
+            currency=currency_usd,
+            amount_total=Decimal('10000'),
+            exchange=Decimal('1.0')
+        )
+        
+        sell_operation = create_operation(
+            account=account_default,
+            type='SELL',
+            date=create_date('2023-06-01'),
+            ticker='AAPL',
+            quantity=Decimal('100'),
+            currency=currency_usd,
+            amount_total=Decimal('15000'),
+            exchange=Decimal('1.0')
+        )
 
         response = authenticated_client.get(url, params)
         
@@ -243,27 +256,41 @@ class TestAccountViewSet:
         # Verify data
         data_row = csv_lines[1].split(',')
         data_row[last_column_index] = data_row[last_column_index].strip()  # removes '\r' if added at the end of the line
-        assert data_row[0] == mock_total_details[0]['ticker']
-        assert data_row[len(data_row) - 1] == str(mock_total_details[0]['profit_detail'][0]['profit'])
+        assert data_row[0] == buy_operation.ticker
+        assert data_row[len(data_row) - 1] == f"{(sell_operation.amount_total - buy_operation.amount_total):.7f}"
         
 
-    def test_total_details_when_no_dates(self, authenticated_client, account_default, mocker):
+    def test_total_details_when_no_dates(
+            self, 
+            authenticated_client, 
+            account_default, 
+            create_operation,
+            create_date,
+            currency_usd):            
+
         url = reverse('account-total-details', args=[account_default.id])
 
-        mock_total_details = [{
-                'ticker': 'AAPL',
-                'profit_detail': [{
-                    'sell_date': '2023-06-01',
-                    'sell_quantity': 100,
-                    'sell_amount_total': 15000,
-                    'sell_currency': 'USD',
-                    'buy_date': '2023-01-15',
-                    'buy_amount_total': 10000,
-                    'buy_currency': 'USD',
-                    'profit': 5000
-                }]
-        }]
-        mocker.patch('profits.views.account_view.get_total_details', return_value=mock_total_details)      
+        buy_operation = create_operation(
+            account=account_default,
+            type='BUY',
+            date=create_date('2023-01-15'),
+            ticker='AAPL',
+            quantity=Decimal('100'),
+            currency=currency_usd,
+            amount_total=Decimal('10000'),
+            exchange=Decimal('1.0')
+        )
+        
+        sell_operation = create_operation(
+            account=account_default,
+            type='SELL',
+            date=create_date('2023-06-01'),
+            ticker='AAPL',
+            quantity=Decimal('100'),
+            currency=currency_usd,
+            amount_total=Decimal('15000'),
+            exchange=Decimal('1.0')
+        )    
 
         response = authenticated_client.get(url)
         

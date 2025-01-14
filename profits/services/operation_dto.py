@@ -4,6 +4,7 @@ from datetime import datetime
 
 @dataclass
 class OperationDTO:
+    type: str
     date: datetime
     quantity: Decimal
     currency: str

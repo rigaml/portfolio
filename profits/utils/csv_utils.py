@@ -4,6 +4,7 @@ from typing import Any
 
 from django.http import HttpResponse
 
+from profits.services.profit_dto import ProfitDTO
 from profits.utils import datetime_utils
 
 TOTAL_DETAILS_HEADERS_CSV = [
@@ -22,18 +23,20 @@ def generate_total_details_csv(
 
     writer = csv.writer(response)
     writer.writerow(TOTAL_DETAILS_HEADERS_CSV)
-    for ticker in tickers_profit:
-        writer.writerow([
-            ticker['ticker'],
-            ticker['profit_detail'][0]['sell_date'], 
-            ticker['profit_detail'][0]['sell_quantity'], 
-            ticker['profit_detail'][0]['sell_amount_total'], 
-            ticker['profit_detail'][0]['sell_currency'], 
-            ticker['profit_detail'][0]['buy_date'], 
-            ticker['profit_detail'][0]['buy_amount_total'], 
-            ticker['profit_detail'][0]['buy_currency'], 
-            ticker['profit_detail'][0]['profit'], 
-        ])
+    for ticker_profit in tickers_profit:
+        ticker= ticker_profit['ticker']
+        for profit_detail in ticker_profit['profit_detail']:
+            writer.writerow([
+                ticker,
+                profit_detail.sell_date, 
+                profit_detail.sell_quantity, 
+                profit_detail.sell_amount_total, 
+                profit_detail.sell_currency, 
+                profit_detail.buy_date, 
+                profit_detail.buy_amount_total, 
+                profit_detail.buy_currency, 
+                profit_detail.profit, 
+            ])
 
     return response
     

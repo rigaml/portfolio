@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+from decimal import Decimal
+from profits.services.profit_dto import ProfitDTO
 from profits.utils.csv_utils import generate_total_details_csv, TOTAL_DETAILS_HEADERS_CSV
 
 
@@ -28,16 +30,18 @@ def test_generate_total_details_csv_when_no_detail_returns_empty_csv():
 def test_generate_total_details_csv_when_one_detail_returns_correct_csv():
     total_details = [{
             'ticker': 'AAPL',
-            'profit_detail': [{
-                'sell_date': '2023-06-01',
-                'sell_quantity': 100,
-                'sell_amount_total': 15000,
-                'sell_currency': 'USD',
-                'buy_date': '2023-01-15',
-                'buy_amount_total': 10000,
-                'buy_currency': 'USD',
-                'profit': 5000
-            }]
+            'profit_detail': [
+                ProfitDTO(
+                    sell_date= datetime(2023, 6, 1, tzinfo=timezone.utc),
+                    sell_quantity= Decimal(100),
+                    sell_amount_total= Decimal(15000),
+                    sell_currency= 'USD',
+                    buy_date= datetime(2023, 1, 15, tzinfo=timezone.utc),
+                    buy_amount_total= Decimal(10000),
+                    buy_currency= 'USD',
+                    profit= Decimal(5000)
+                )
+            ]
     }]
     
     response = generate_total_details_csv(

@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
 from profits.models import Account, Operation
 from profits.services.currency_service import CurrencyService
@@ -68,32 +68,21 @@ class ProfitService:
         if sell_left.quantity > 0:
             raise ValueError(f'On date {sell_left.date} there are {sell_left.quantity} stocks left to sell without corresponding buys.')
 
-    def create_operation_dto(self, ticker_operation: Operation) -> OperationDTO:
-        return OperationDTO(
-            date= ticker_operation.date,
-            quantity= ticker_operation.quantity,
-            currency= ticker_operation.currency.iso_code,
-            price_avg= ticker_operation.amount_total / ticker_operation.quantity
-        )
 
-    def get_total_details_ticker(self, ticker_operations: list[Operation]) -> list[ProfitDTO]:
+    def get_total_details_ticker(self, ticker_operations: list[OperationDTO]) -> list[ProfitDTO]:
         buys = []
         profits = []
         buys_used_index = 0
         
         for ticker_operation in ticker_operations:
-            operation_tracker= self.create_operation_dto(ticker_operation)
             if ticker_operation.type == 'BUY':
-                buys.append(operation_tracker)
+                buys.append(ticker_operation)
             else:
-                try:
-                    self.add_profit_lines(operation_tracker, buys, buys_used_index, profits)
-                except ValueError as e:
-                    raise ProfitServiceBuySellMissmatch(f'For ticker {ticker_operation.ticker} there is error: {e}') from e
+                self.add_profit_lines(ticker_operation, buys, buys_used_index, profits)
 
         return profits
 
-    def get_total_details(self, account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> list[dict]:
+    def get_total_details(self, account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> list[dict[str, Any]]:
         
         account_tickers_sold = self.operation_service.get_account_tickers_sold_period(account, date_start, date_end)
         tickers_profit = []
@@ -102,8 +91,11 @@ class ProfitService:
                 continue
 
             ticker_operations= self.operation_service.get_account_ticker_operations(account, ticker_sold, date_end)
-            
-            ticker_profits = self.get_total_details_ticker(ticker_operations)
+
+            try:
+                ticker_profits = self.get_total_details_ticker(ticker_operations)
+            except ValueError as e:
+                raise ProfitServiceBuySellMissmatch(f'For ticker {ticker_sold} there is error: {e}') from e
 
             tickers_profit.append(
                 {
