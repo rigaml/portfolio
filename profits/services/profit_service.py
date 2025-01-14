@@ -10,9 +10,10 @@ from profits.services.profit_dto import ProfitDTO
 from profits.services.exceptions import ProfitServiceBuySellMissmatch
 
 class ProfitService:
-    def __init__(self, 
-                 operation_service: OperationService, 
-                 currency_service: CurrencyService):
+    def __init__(
+            self, 
+            operation_service: OperationService, 
+            currency_service: CurrencyService):
         self.operation_service = operation_service
         self.currency_service = currency_service        
 

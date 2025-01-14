@@ -13,6 +13,7 @@ from profits.models import Account
 @pytest.mark.django_db
 class TestAccountViewSet:
 
+    # TODO: Add authentication tests
     # At the moment DRF is not configured for authentication in setting.py (uncomment `REST_FRAMEWORK` section for this)
     # def test_unauthorized_access(self, api_client: APIClient, account: Account):
     #     url = reverse('account-list')
