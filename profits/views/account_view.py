@@ -8,14 +8,30 @@ from rest_framework.viewsets import ModelViewSet
 from profits.models import Account
 from profits.permissions import IsAdminOrReadOnly
 from profits.serializers import AccountSerializer
+from profits.services.currency_service import CurrencyService
+from profits.services.operation_service import OperationService
 from profits.utils import datetime_utils, csv_utils
-from profits.services.profit_service import get_total, get_total_details
+from profits.services.profit_service import ProfitService
+
+
+class ProfitServiceFactory:
+    def create(self, date_end):
+        # Using 'None' as should take currencies before the data as posibility operation 
+        # was in a bank holiday and need to take a previous conversion
+        currency_service = CurrencyService(None, date_end)
+        operation_service= OperationService()
+        return ProfitService(operation_service, currency_service)
 
 class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
 
     # permission_classes = [IsAdminOrReadOnly]
+
+    def __init__(self, *args, **kwargs):
+        """Setting dependecy factory in the init"""
+        super().__init__(*args, **kwargs)
+        self.profit_service_factory = ProfitServiceFactory()
 
     def destroy(self, request, pk):
         account= get_object_or_404(Account, pk=pk)
@@ -47,7 +63,11 @@ class AccountViewSet(ModelViewSet):
         except ValueError:
             return Response({"error": f"Invalid date format `{date_start}` or `{date_end}`."}, status=400)
 
-        amount_total= get_total(account, date_start, date_end)
+        try:
+            profit_service = self.profit_service_factory.create(date_end)
+            amount_total = profit_service.get_total(account, date_start, date_end)
+        except Exception:
+            return Response({"error": f"There was an error calculating total amount for account {account} between dates `{date_start}` or `{date_end}`."}, status=400)
 
         params = {
             'id': account.id,
@@ -77,5 +97,10 @@ class AccountViewSet(ModelViewSet):
         except ValueError:
             return Response({"error": f"Invalid date format `{date_start}` or `{date_end}`."}, status=400)
         
-        tickers_profit = get_total_details(account, date_start, date_end)
+        try:
+            profit_service = self.profit_service_factory.create(date_end)
+            tickers_profit = profit_service.get_total_details(account, date_start, date_end)
+        except Exception:
+            return Response({"error": f"There was an error calculating total details for account {account} between dates `{date_start}` or `{date_end}`."}, status=400)
+
         return csv_utils.generate_total_details_csv(tickers_profit, account.id, date_start, date_end)
