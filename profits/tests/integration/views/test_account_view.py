@@ -123,6 +123,7 @@ class TestAccountViewSet:
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
     @pytest.mark.parametrize("invalid_field",
                             [("date_start"),
                              ("date_end"),
@@ -156,9 +157,9 @@ class TestAccountViewSet:
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['id'] == account_default.id
-        assert response.data['amount_total'] == Decimal(10000)
         assert response.data['date_start'] == make_aware(datetime.fromisoformat(params['date_start']))
         assert response.data['date_end'] == make_aware(datetime.fromisoformat(params['date_end']))
+        assert response.data['profit_total'] == Decimal(0)
 
 
     def test_total_when_no_dates(self, authenticated_client, account_default, operation_default):
@@ -167,9 +168,9 @@ class TestAccountViewSet:
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['id'] == account_default.id
-        assert response.data['amount_total'] == Decimal(10000)
         assert response.data['date_start'] is None
         assert response.data['date_end'] is None
+        assert response.data['profit_total'] == Decimal(0)
 
     def test_total_details_account_when_not_found_returns_404(self, authenticated_client):
         url = reverse('account-total-details', args=[99999])

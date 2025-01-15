@@ -1,6 +1,6 @@
 import csv
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from django.http import HttpResponse
 
@@ -13,8 +13,8 @@ TOTAL_DETAILS_HEADERS_CSV = [
 def generate_total_details_csv(
     tickers_profit: list[dict[str, Any]],
     account_id: int,
-    date_start: datetime,
-    date_end: datetime
+    date_start: Optional[datetime],
+    date_end: Optional[datetime]
 ) -> HttpResponse:
 
     response = HttpResponse(content_type='text/csv')
