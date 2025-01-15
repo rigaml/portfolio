@@ -1,6 +1,6 @@
 from decimal import Decimal
-from profits.services.operation_dto import OperationDTO
-from profits.services.profit_dto import ProfitDTO
+from profits.interfaces.dtos.operation_dto import OperationDTO
+from profits.interfaces.dtos.profit_dto import ProfitDTO
 
 
 class ProfitCalculator:

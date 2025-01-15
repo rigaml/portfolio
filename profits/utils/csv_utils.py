@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 from django.http import HttpResponse
 
-from profits.services.profit_dto import ProfitDTO
+from profits.interfaces.dtos.profit_dto import ProfitDTO
 from profits.utils import datetime_utils
 
 TOTAL_DETAILS_HEADERS_CSV = [

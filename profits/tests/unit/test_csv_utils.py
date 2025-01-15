@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from profits.services.profit_dto import ProfitDTO
+from profits.interfaces.dtos.profit_dto import ProfitDTO
 from profits.utils.csv_utils import generate_total_details_csv, TOTAL_DETAILS_HEADERS_CSV
 
 

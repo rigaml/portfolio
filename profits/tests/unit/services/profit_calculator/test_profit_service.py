@@ -10,7 +10,7 @@ from profits.services.profit_service import ProfitService
 from profits.services.currency_service import CurrencyService
 from profits.repositories.operation_repository import OperationRepository
 
-class TestGetTotalDetails:
+class TestProfitService:
     @pytest.fixture
     def operation_repository_mock(self):
         return Mock(spec=OperationRepository)

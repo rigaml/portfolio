@@ -4,13 +4,9 @@ import pytest
 
 from datetime import datetime, timezone
 
-from profits.services.exceptions import ProfitServiceBuySellMissmatch
-from profits.services.operation_dto import OperationDTO
 from profits.services.profit_calculator import ProfitCalculator
-from profits.services.profit_service import ProfitService
-from profits.services.currency_service import CurrencyService
-from profits.services.operation_service import OperationService
-from profits.services.profit_dto import ProfitDTO
+from profits.interfaces.dtos.operation_dto import OperationDTO
+from profits.interfaces.dtos.profit_dto import ProfitDTO
 
 
 class TestCalculateTickerProfits:

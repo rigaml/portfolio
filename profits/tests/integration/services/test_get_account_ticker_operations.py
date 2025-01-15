@@ -2,7 +2,7 @@ import pytest
 
 from datetime import datetime, timezone
 
-from profits.services.operation_service import OperationService
+from profits.repositories.operation_repository import OperationRepository
 
 
 @pytest.fixture
@@ -26,8 +26,8 @@ class TestGetAccountTickerOperations:
         
     def test_when_no_date_end_then_returns_default_account_all_operations(self, account_default, sample_operations):
         
-        operation_service = OperationService()
-        result = operation_service.get_account_ticker_operations(account_default, 'AAPL', None)
+        operation_repository = OperationRepository()
+        result = operation_repository.get_account_ticker_operations(account_default, 'AAPL', None)
         
         assert len(result) == 3
         assert list(result) == sorted(result, key=lambda x: x.date)
@@ -35,15 +35,15 @@ class TestGetAccountTickerOperations:
     def test_when_filtered_by_date_end_then_returns_default_account_previous_operations(self, account_default, sample_operations):
         date_end = datetime(2024, 3, 1, tzinfo=timezone.utc)
 
-        operation_service = OperationService()
-        result = operation_service.get_account_ticker_operations(account_default, 'AAPL', date_end)
+        operation_repository = OperationRepository()
+        result = operation_repository.get_account_ticker_operations(account_default, 'AAPL', date_end)
         
         assert len(result) == 2
 
     def test_when_account_without_operations_then_returns_no_operations(self, create_account, sample_operations):
         account_without_operations = create_account()
 
-        operation_service = OperationService()
-        result = operation_service.get_account_ticker_operations(account_without_operations, 'AAPL', None)
+        operation_repository = OperationRepository()
+        result = operation_repository.get_account_ticker_operations(account_without_operations, 'AAPL', None)
         
         assert len(result) == 0
