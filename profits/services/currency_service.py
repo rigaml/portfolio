@@ -6,10 +6,6 @@ from profits.models import CurrencyExchange
 from profits.services.exceptions import CurrencyConversionException, CurrencyExchangeNotFoundException
     
 class CurrencyService:
-    class CurrencyConversionException:
-        """Raised when there's an error in currency conversion"""
-        pass
-
     def __init__(self, date_start: Optional[datetime], date_end: Optional[datetime]) -> None:
         self.date_start = date_start
         self.date_end = date_end
