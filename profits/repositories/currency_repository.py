@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Optional
 
 from profits.models import CurrencyExchange
-from profits.services.exceptions import CurrencyExchangeNotFoundException
     
 class CurrencyRepository:
     @staticmethod
@@ -32,11 +31,6 @@ class CurrencyRepository:
             exchanges = exchanges.filter(date__lte=date_end)
 
         exchanges = exchanges.order_by('date')
-
-        if not exchanges.exists():
-            raise CurrencyExchangeNotFoundException(
-                f"No exchange rates found for {origin_currency_code}-{target_currency_code} "
-                f"between {date_start} and {date_end}")
 
         exchange_dict = {}
         for exchange in exchanges:

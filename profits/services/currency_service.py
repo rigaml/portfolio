@@ -1,8 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from decimal import Decimal
 from typing import Optional
 
-from profits.services.exceptions import CurrencyConversionException
+from profits.services.exceptions import CurrencyConversionException, CurrencyExchangeNotFoundException
 from profits.repositories.currency_repository import CurrencyRepository
 
 class CurrencyService:
@@ -15,7 +15,8 @@ class CurrencyService:
     @staticmethod
     def is_currency_conversion(ticker: str) -> bool:
         """
-        Checks if the given ticker represents a currency conversion.
+        Checks if the given ticker represents a currency conversion. 
+        These are values found in the operation input data, add more if necessary.
         """
 
         return ticker.upper() in ('USDGBP', 'USDEUR', 'GBPUSD', 'GBPEUR', 'EURUSD', 'EURGBP')
@@ -28,20 +29,26 @@ class CurrencyService:
         if origin_currency_code == target_currency_code:
             return Decimal(1)
 
-        pair_key= f"{origin_currency_code}-{target_currency_code}"
-        pair_exchanges= self.currencies_exchanges_cache.get(pair_key, None)
-        if not pair_exchanges:
-            self.currencies_exchanges_cache[pair_key]= self.currency_repository.get_currency_exchanges(origin_currency_code, target_currency_code, self.date_start, self.date_end)
-            pair_exchanges = self.currencies_exchanges_cache[pair_key]
+        currency_pair_key= f"{origin_currency_code}-{target_currency_code}"
+        currency_pair_exchanges= self.currencies_exchanges_cache.get(currency_pair_key, None)
+        if not currency_pair_exchanges:
+            currency_pair_exchanges= self.currency_repository.get_currency_exchanges(origin_currency_code, target_currency_code, self.date_start, self.date_end)
+            if not currency_pair_exchanges:
+                raise CurrencyExchangeNotFoundException(
+                    f"No exchange rates found for {origin_currency_code}-{target_currency_code} "
+                    f"between {self.date_start} and {self.date_end}")
+
+            self.currencies_exchanges_cache[currency_pair_key] = currency_pair_exchanges
 
         exchange_rate = None
-        date_iteration= date_request
-        first_date = next(iter(pair_exchanges))
-        while not exchange_rate and first_date <= date_iteration:
-            exchange_rate= pair_exchanges.get(date_iteration.date, None)
+        date_iteration= date_request.date()
+        first_date_key = next(iter(currency_pair_exchanges))
+
+        while not exchange_rate and first_date_key <= date_iteration:
+            exchange_rate= currency_pair_exchanges.get(date_iteration, None)
             date_iteration= date_iteration - timedelta(days=1)
 
         if exchange_rate:
             return exchange_rate
         
-        raise CurrencyConversionException(f"Exchange for {pair_key} could not be found for date {date_request}")
+        raise CurrencyConversionException(f"Exchange for {currency_pair_key} could not be found for date {date_request}")
