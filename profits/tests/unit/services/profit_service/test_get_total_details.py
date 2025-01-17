@@ -53,5 +53,5 @@ class TestGetTotalDetails:
 
         assert len(result) == 1
         assert result[0]['ticker'] == 'AAPL'
-        assert len(result[0]['profit_detail']) == 1
-        assert result[0]['profit_detail'][0].profit == Decimal('200')
+        assert len(result[0]['profit_details']) == 1
+        assert result[0]['profit_details'][0].profit == Decimal('200')

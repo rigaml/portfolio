@@ -21,7 +21,7 @@ class TestProfitService:
     
     @pytest.fixture
     def profit_calculator_mock(self):
-        return Mock(spec=ProfitCalculator)    
+        return Mock(spec=ProfitCalculator)
     
     @pytest.fixture
     def profit_service_mock(self, operation_repository_mock, currency_service_mock, profit_calculator_mock):
@@ -53,5 +53,5 @@ class TestProfitService:
 
         assert len(result) == 1
         assert result[0]['ticker'] == 'AAPL'
-        assert len(result[0]['profit_detail']) == 1
-        assert result[0]['profit_detail'][0].profit == Decimal('200')
+        assert len(result[0]['profit_details']) == 1
+        assert result[0]['profit_details'][0].profit == Decimal('200')

@@ -25,7 +25,7 @@ def generate_total_details_csv(
     writer.writerow(TOTAL_DETAILS_HEADERS_CSV)
     for ticker_profit in tickers_profit:
         ticker= ticker_profit['ticker']
-        for profit_detail in ticker_profit['profit_detail']:
+        for profit_detail in ticker_profit['profit_details']:
             writer.writerow([
                 ticker,
                 profit_detail.sell_date, 

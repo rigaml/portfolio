@@ -33,7 +33,7 @@ class ProfitService:
             except ValueError as e:
                 raise ProfitServiceBuySellMissmatch(f'For ticker {ticker_sold} there is error: {e}') from e
             
-            amount_total += sum(ticker_profit.profit for ticker_profit in ticker_profits)
+            amount_total += sum(ticker_profit.profit_exchange for ticker_profit in ticker_profits)
 
         return amount_total
 
@@ -55,7 +55,7 @@ class ProfitService:
             tickers_profit.append(
                 {
                     'ticker': ticker_sold,
-                    'profit_detail': ticker_profits
+                    'profit_details': ticker_profits
                 }
             )
         

@@ -50,5 +50,5 @@ class CurrencyService:
 
         if exchange_rate:
             return exchange_rate
-        
+
         raise CurrencyConversionException(f"Exchange for {currency_pair_key} could not be found for date {date_request}")

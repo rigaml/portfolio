@@ -1,15 +1,24 @@
 from decimal import Decimal
 from profits.interfaces.dtos.operation_dto import OperationDTO
-from profits.interfaces.dtos.profit_dto import ProfitDTO
+from profits.interfaces.dtos.profit_dto import ProfitDTO, ProfitExchangeDTO
+from profits.services.profit_exchanger import ProfitExchanger
 
 
-class ProfitCalculator:
-    def __init__(self):
-        self.buys = []
-        self.profits = []
+class ProfitCalculator():
+    def __init__(self, profit_exchanger: ProfitExchanger):
+        self.profit_exchanger = profit_exchanger
+        self.buys: list[OperationDTO] = []
+        self.profits: list[ProfitExchangeDTO] = []
 
-    def _create_profit_dto(self, sell_quantity_line: Decimal, sell: OperationDTO, buy: OperationDTO) -> ProfitDTO:
-        return ProfitDTO(
+    def _calculate_profit_match(self, sell_quantity_line: Decimal, sell: OperationDTO, buy: OperationDTO, target_currency: str) -> ProfitExchangeDTO:
+        """
+        Calculate profit for a match between a SELL and a BUY operation.
+        """
+        profit = None
+        if sell.currency == buy.currency:
+            profit = sell_quantity_line * (sell.price_avg - buy.price_avg)
+
+        profit_dto = ProfitDTO(
                 sell_date= sell.date,
                 sell_quantity= sell_quantity_line,
                 sell_amount_total= sell_quantity_line * sell.price_avg,
@@ -17,13 +26,12 @@ class ProfitCalculator:
                 buy_date= buy.date,
                 buy_amount_total= sell_quantity_line * buy.price_avg,
                 buy_currency= buy.currency,
-                profit= sell_quantity_line * (sell.price_avg - buy.price_avg)
+                profit= profit
         )
-                    
-    def _add_buy(self, buy_operation: OperationDTO):
-        self.buys.append(buy_operation)
 
-    def _calculate_profits_for_sell(self, sell_operation: OperationDTO) -> list[ProfitDTO]:
+        return self.profit_exchanger.exchange_currencies(profit_dto, target_currency)
+                    
+    def _calculate_profits_for_sell(self, sell_operation: OperationDTO, target_currency: str) -> list[ProfitExchangeDTO]:
         """
         Calculate profits for a given SELL operation using the FIFO method.
         """
@@ -44,7 +52,8 @@ class ProfitCalculator:
                 sell_quantity -= sell_quantity_line
                 self.buys.pop(0)
 
-            profit_dto= self._create_profit_dto(sell_quantity_line, sell_operation, current_buy)
+
+            profit_dto= self._calculate_profit_match(sell_quantity_line, sell_operation, current_buy, target_currency)
             profits.append(profit_dto)
 
         if sell_quantity > 0:
@@ -52,14 +61,14 @@ class ProfitCalculator:
 
         return profits
     
-    def calculate_ticker_profits(self, ticker_operations: list[OperationDTO]) -> list[ProfitDTO]:
+    def calculate_ticker_profits(self, ticker_operations: list[OperationDTO], target_currency: str =  "GBP") -> list[ProfitExchangeDTO]:
         profits = []
         
         for operation in ticker_operations:
             if operation.type == 'BUY':
-                self._add_buy(operation)
+                self.buys.append(operation)
             elif operation.type == 'SELL':
-                profits_sell= self._calculate_profits_for_sell(operation)
+                profits_sell= self._calculate_profits_for_sell(operation, target_currency)
                 profits.extend(profits_sell)
             else:
                 raise ValueError(f"Unexpected operation type {operation.type}")

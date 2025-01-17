@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 from datetime import datetime
+from typing import Optional
 
 @dataclass
 class ProfitDTO:
@@ -11,4 +12,10 @@ class ProfitDTO:
     buy_date: datetime
     buy_amount_total: Decimal
     buy_currency: str
-    profit: Decimal
+    profit: Optional[Decimal]
+
+@dataclass
+class ProfitExchangeDTO(ProfitDTO):
+    sell_amount_total_exchange: Decimal
+    buy_amount_total_exchange: Decimal
+    profit_exchange: Decimal

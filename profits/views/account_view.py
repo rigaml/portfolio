@@ -14,6 +14,7 @@ from profits.services.currency_service import CurrencyService
 from profits.repositories.currency_repository import CurrencyRepository
 from profits.repositories.operation_repository import OperationRepository
 from profits.services.profit_calculator import ProfitCalculator
+from profits.services.profit_exchanger import ProfitExchanger
 from profits.utils import datetime_utils, csv_utils
 from profits.services.profit_service import ProfitService
 
@@ -24,7 +25,7 @@ class ProfitServiceFactory:
         # was in a bank holiday and need to take a previous conversion
         currency_service = CurrencyService(CurrencyRepository(), None, date_end)
         operation_repository= OperationRepository()
-        profit_calculator= ProfitCalculator()
+        profit_calculator= ProfitCalculator(ProfitExchanger(currency_service))
         return ProfitService(operation_repository, currency_service, profit_calculator)
 
 class AccountViewSet(ModelViewSet):
@@ -59,7 +60,6 @@ class AccountViewSet(ModelViewSet):
         except ValueError:
             return None, None, None, Response({"error": f"Invalid date format `{date_start}` or `{date_end}`."}, status=400)
 
-        # Initialize profit service
         try:
             profit_service = self.profit_service_factory.create(date_end)
         except Exception as e:

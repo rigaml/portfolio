@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
 from profits.models import CurrencyExchange
@@ -22,9 +23,9 @@ class CurrencyRepository:
         """
         exchanges= CurrencyExchange.objects
         if origin_currency_code:
-            exchanges = exchanges.filter(origin_iso_code=origin_currency_code)
+            exchanges = exchanges.filter(origin__iso_code=origin_currency_code)
         if target_currency_code:
-            exchanges = exchanges.filter(target_iso_code=target_currency_code)
+            exchanges = exchanges.filter(target__iso_code=target_currency_code)
         if date_start:
             exchanges = exchanges.filter(date__gte=date_start)
         if date_end:

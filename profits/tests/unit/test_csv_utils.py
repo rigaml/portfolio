@@ -30,7 +30,7 @@ def test_generate_total_details_csv_when_no_detail_returns_empty_csv():
 def test_generate_total_details_csv_when_one_detail_returns_correct_csv():
     total_details = [{
             'ticker': 'AAPL',
-            'profit_detail': [
+            'profit_details': [
                 ProfitDTO(
                     sell_date= datetime(2023, 6, 1, tzinfo=timezone.utc),
                     sell_quantity= Decimal(100),
