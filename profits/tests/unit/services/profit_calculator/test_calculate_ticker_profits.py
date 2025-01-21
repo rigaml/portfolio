@@ -1,4 +1,3 @@
-import dataclasses
 from decimal import Decimal
 from unittest.mock import Mock
 import pytest
@@ -41,10 +40,9 @@ class TestCalculateTickerProfits:
     
     @pytest.fixture
     def mock_profit_exchange_dto(self):
-        def _create_profit_exchange_dto():
-            # Using "Mock(spec=OperationDTO)" so test is loosely coupled to OperationDTO implementation (future proofing)
+        def _create_profit_exchange_dto(profit_exchange: Decimal = Decimal(5)):
             profit_exchange_dto = Mock(spec=ProfitExchangeDTO)
-            profit_exchange_dto.profit_exchange =Decimal(5)
+            profit_exchange_dto.profit_exchange = profit_exchange
             return profit_exchange_dto
         return _create_profit_exchange_dto      
             
@@ -100,7 +98,15 @@ class TestCalculateTickerProfits:
             sell_date=datetime(2024, 2, 15, tzinfo=timezone.utc), sell_quantity=Decimal(10), sell_amount_total=Decimal(1200), sell_currency='GBP',
             buy_date=datetime(2024, 1, 1, tzinfo=timezone.utc), buy_amount_total=Decimal(1000), buy_currency='GBP', profit=Decimal(200))]),
     ])
-    def test_when_sell_with_matching_buy_then_returns_profit(self, profit_calculator_mock, profit_exchanger_mock, mock_operation_dto, mock_profit_exchange_dto, operations, expected_profits):
+    def test_when_sell_with_matching_buy_then_returns_profit(
+        self, 
+        profit_calculator_mock, 
+        profit_exchanger_mock, 
+        mock_operation_dto, 
+        mock_profit_exchange_dto, 
+        operations, 
+        expected_profits):
+
         ticker_operations = []
         for operation in operations:
             ticker_operations.append(
@@ -113,17 +119,18 @@ class TestCalculateTickerProfits:
                 )
             )
 
-        profit_exchanger_mock.exchange_currencies.return_value = mock_profit_exchange_dto()
+        profit_exchanger_mock.exchange_currencies.side_effect = [mock_profit_exchange_dto(expected_profit.profit) for expected_profit in expected_profits]
 
         result = profit_calculator_mock.calculate_ticker_profits(ticker_operations)
 
         # Assert results
         assert len(result) == len(expected_profits)
 
-        for result_profit in result:
-            assert result_profit.profit_exchange == Decimal(5)
+        for result_profit, expected_profit in zip(result, expected_profits):
+            assert result_profit.profit_exchange == expected_profit.profit
 
-        assert profit_exchanger_mock.exchange_currencies.call_count == len(expected_profits)
+        assert profit_exchanger_mock.exchange_currencies.call_count == len(expected_profits), \
+            "Expected exchange_currencies to be called once per profit"
 
         calls = profit_exchanger_mock.exchange_currencies.call_args_list
         for call, expected_profit in zip(calls, expected_profits):
