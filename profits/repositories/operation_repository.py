@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Optional
-from profits.services.operation_dto import OperationDTO
+from profits.interfaces.dtos.operation_dto import OperationDTO
 from profits.models import Account, Operation
 
 
-class OperationService:
+class OperationRepository:
     def get_account_tickers_sold_period(self, account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> list[str]:
         """
         Returns the list of tickers that were sold within the given time period for the given account.

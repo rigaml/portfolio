@@ -11,8 +11,10 @@ from profits.models import Account
 from profits.permissions import IsAdminOrReadOnly
 from profits.serializers import AccountSerializer
 from profits.services.currency_service import CurrencyService
-from profits.services.operation_service import OperationService
+from profits.repositories.currency_repository import CurrencyRepository
+from profits.repositories.operation_repository import OperationRepository
 from profits.services.profit_calculator import ProfitCalculator
+from profits.services.profit_exchanger import ProfitExchanger
 from profits.utils import datetime_utils, csv_utils
 from profits.services.profit_service import ProfitService
 
@@ -21,10 +23,10 @@ class ProfitServiceFactory:
     def create(self, date_end):
         # Using 'None' as should take currencies before the data as posibility operation 
         # was in a bank holiday and need to take a previous conversion
-        currency_service = CurrencyService(None, date_end)
-        operation_service= OperationService()
-        profit_calculator= ProfitCalculator()
-        return ProfitService(operation_service, currency_service, profit_calculator)
+        currency_service = CurrencyService(CurrencyRepository(), None, date_end)
+        operation_repository= OperationRepository()
+        profit_calculator= ProfitCalculator(ProfitExchanger(currency_service))
+        return ProfitService(operation_repository, currency_service, profit_calculator)
 
 class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()
@@ -58,7 +60,6 @@ class AccountViewSet(ModelViewSet):
         except ValueError:
             return None, None, None, Response({"error": f"Invalid date format `{date_start}` or `{date_end}`."}, status=400)
 
-        # Initialize profit service
         try:
             profit_service = self.profit_service_factory.create(date_end)
         except Exception as e:
@@ -108,7 +109,7 @@ class AccountViewSet(ModelViewSet):
     @action(detail=True, methods=["get"], url_path='total-details')
     def total_details(self, request, pk=None):
         """
-        List the details of buy and sell operations used to calculate profits.
+        Lists details of buy and sell operations used to calculate profits.
         http://127.0.0.1:8000/profits/account/1/total-details?date_start=2023-01-01&date_end=2023-12-31
         """
         account, date_start, date_end, profit_service_or_response = self._get_account_and_service(request, pk)

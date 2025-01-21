@@ -206,7 +206,9 @@ class TestAccountViewSet:
             account_default, 
             create_operation,
             create_date,
-            currency_usd):
+            currency_usd,
+            currency_gbp,
+            create_currency_exchange):
         
         url = reverse('account-total-details', args=[account_default.id])
         params = {
@@ -224,6 +226,9 @@ class TestAccountViewSet:
             amount_total=Decimal('10000'),
             exchange=Decimal('1.0')
         )
+
+        # Creates the exchange for the BUY
+        create_currency_exchange(date=create_date('2023-01-15'), origin=currency_usd, target=currency_gbp, rate=Decimal('1.0'))
         
         sell_operation = create_operation(
             account=account_default,
@@ -236,8 +241,14 @@ class TestAccountViewSet:
             exchange=Decimal('1.0')
         )
 
+        # Creates the exchange for the SELL
+        create_currency_exchange(date=create_date('2023-06-01'), origin=currency_usd, target=currency_gbp, rate=Decimal('1.0'))
+
         response = authenticated_client.get(url, params)
         
+        # print("Response content:", response.content.decode('utf-8'))
+        # print("Response JSON:", response.json())
+
         assert response.status_code == status.HTTP_200_OK
         assert response['Content-Type'] == 'text/csv'
         assert 'attachment; filename=' in response['Content-Disposition']
@@ -267,7 +278,9 @@ class TestAccountViewSet:
             account_default, 
             create_operation,
             create_date,
-            currency_usd):            
+            currency_usd,
+            currency_gbp,
+            create_currency_exchange):          
 
         url = reverse('account-total-details', args=[account_default.id])
 
@@ -281,6 +294,8 @@ class TestAccountViewSet:
             amount_total=Decimal('10000'),
             exchange=Decimal('1.0')
         )
+
+        create_currency_exchange(date=create_date('2023-01-15'), origin=currency_usd, target=currency_gbp, rate=Decimal('1.0'))
         
         sell_operation = create_operation(
             account=account_default,
@@ -292,6 +307,9 @@ class TestAccountViewSet:
             amount_total=Decimal('15000'),
             exchange=Decimal('1.0')
         )    
+
+        # Creates the exchange for the SELL
+        create_currency_exchange(date=create_date('2023-06-01'), origin=currency_usd, target=currency_gbp, rate=Decimal('1.0'))
 
         response = authenticated_client.get(url)
         

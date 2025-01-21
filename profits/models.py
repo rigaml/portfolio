@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 from django.conf import settings
 
-from profits.services.operation_dto import OperationDTO
+from profits.interfaces.dtos.operation_dto import OperationDTO
 
 class Broker(models.Model):
     name = models.CharField(max_length=10, unique=True)

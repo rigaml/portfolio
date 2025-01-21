@@ -4,16 +4,22 @@ import pytest
 
 from datetime import datetime, timezone
 
-from profits.services.exceptions import ProfitServiceBuySellMissmatch
-from profits.services.operation_dto import OperationDTO
 from profits.services.profit_calculator import ProfitCalculator
-from profits.services.profit_service import ProfitService
-from profits.services.currency_service import CurrencyService
-from profits.services.operation_service import OperationService
-from profits.services.profit_dto import ProfitDTO
+from profits.interfaces.dtos.operation_dto import OperationDTO
+from profits.interfaces.dtos.profit_dto import ProfitDTO, ProfitExchangeDTO
+from profits.services.profit_exchanger import ProfitExchanger
 
 
 class TestCalculateTickerProfits:
+    @pytest.fixture
+    def profit_exchanger_mock(self):
+        return Mock(spec=ProfitExchanger)
+    
+    @pytest.fixture
+    def profit_calculator_mock(self, profit_exchanger_mock):
+        return ProfitCalculator(
+            profit_exchanger=profit_exchanger_mock,
+        )
     @pytest.fixture
     def mock_operation_dto(self):
         def _create_operation_dto(
@@ -31,31 +37,36 @@ class TestCalculateTickerProfits:
             operation_dto.price_avg = price_avg
             return operation_dto
         return _create_operation_dto   
+    
+    @pytest.fixture
+    def mock_profit_exchange_dto(self):
+        def _create_profit_exchange_dto(profit_exchange: Decimal = Decimal(5)):
+            profit_exchange_dto = Mock(spec=ProfitExchangeDTO)
+            profit_exchange_dto.profit_exchange = profit_exchange
+            return profit_exchange_dto
+        return _create_profit_exchange_dto      
             
-    def test_when_no_operations_then_returns_empty_list(self):
+    def test_when_no_operations_then_returns_empty_list(self, profit_calculator_mock):
         ticker_operations = []
 
-        profit_calculator = ProfitCalculator()
-        result = profit_calculator.calculate_ticker_profits(ticker_operations)
+        result = profit_calculator_mock.calculate_ticker_profits(ticker_operations)
         
         assert len(result) == 0
 
-    def test_when_sell_without_buy_then_raises_exception(self, mock_operation_dto):
+    def test_when_sell_without_buy_then_raises_exception(self, profit_calculator_mock, mock_operation_dto):
         ticker_operations = [mock_operation_dto(type='SELL')]
 
-        profit_calculator = ProfitCalculator()
         with pytest.raises(ValueError) as e:
-            profit_calculator.calculate_ticker_profits(ticker_operations)
+            profit_calculator_mock.calculate_ticker_profits(ticker_operations)
 
-    def test_when_sell_quantity_bigger_than_buy_then_raises_exception(self, mock_operation_dto):
+    def test_when_sell_quantity_bigger_than_buy_then_raises_exception(self, profit_calculator_mock, mock_operation_dto):
         ticker_operations = [
             mock_operation_dto(type='BUY', quantity=Decimal('10.00')),
             mock_operation_dto(type='SELL', quantity=Decimal('11.00'))
         ]
 
-        profit_calculator = ProfitCalculator()
         with pytest.raises(ValueError) as e:
-            profit_calculator.calculate_ticker_profits(ticker_operations)
+            profit_calculator_mock.calculate_ticker_profits(ticker_operations)
 
     @pytest.mark.parametrize("operations, expected_profits", [
         # Case 1: Corresponding buy and sell
@@ -87,7 +98,15 @@ class TestCalculateTickerProfits:
             sell_date=datetime(2024, 2, 15, tzinfo=timezone.utc), sell_quantity=Decimal(10), sell_amount_total=Decimal(1200), sell_currency='GBP',
             buy_date=datetime(2024, 1, 1, tzinfo=timezone.utc), buy_amount_total=Decimal(1000), buy_currency='GBP', profit=Decimal(200))]),
     ])
-    def test_when_sell_with_matching_buy_then_returns_profit(self, mock_operation_dto, operations, expected_profits):
+    def test_when_sell_with_matching_buy_then_returns_profit(
+        self, 
+        profit_calculator_mock, 
+        profit_exchanger_mock, 
+        mock_operation_dto, 
+        mock_profit_exchange_dto, 
+        operations, 
+        expected_profits):
+
         ticker_operations = []
         for operation in operations:
             ticker_operations.append(
@@ -98,9 +117,22 @@ class TestCalculateTickerProfits:
                     currency= 'GBP',
                     price_avg= Decimal(operation['price_avg'])
                 )
-            ) 
+            )
 
-        profit_calculator = ProfitCalculator()
-        result = profit_calculator.calculate_ticker_profits(ticker_operations)
+        profit_exchanger_mock.exchange_currencies.side_effect = [mock_profit_exchange_dto(expected_profit.profit) for expected_profit in expected_profits]
 
-        assert result == expected_profits
+        result = profit_calculator_mock.calculate_ticker_profits(ticker_operations)
+
+        # Assert results
+        assert len(result) == len(expected_profits)
+
+        for result_profit, expected_profit in zip(result, expected_profits):
+            assert result_profit.profit_exchange == expected_profit.profit
+
+        assert profit_exchanger_mock.exchange_currencies.call_count == len(expected_profits), \
+            "Expected exchange_currencies to be called once per profit"
+
+        calls = profit_exchanger_mock.exchange_currencies.call_args_list
+        for call, expected_profit in zip(calls, expected_profits):
+            # adding "{}" to verify that no keyword parameters are passed
+            assert call == ((expected_profit, 'GBP'), {})

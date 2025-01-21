@@ -8,13 +8,14 @@ A few years ago, I created a script to help me fill in my HMRC tax returns for s
 
 ## Functionality
 
-Given a list of stock operations within a portfolio account, this API calculates the profits and losses for the account over a specified period.
+Given a list of stock operations within a portfolio account, API calculates the profits and losses for the account over a specified period.
+If operations are in a currency different than GBP it converts the amounts to, as HMRC requires reporting in GBP.
 
 ## Future Improvements
-- Currency conversion to GBP (as this is for HMRC) to operation amounts.
 - Apply stocks splits to buy and sells when calculating profits.
 - Create deployment pipeline.
 - Add authorization.
+- Add logging
 - Add parameter to request to get account total details to specify in which currency the profits should be displayed.
 
 ## Usage (local)
@@ -84,20 +85,20 @@ To execute Django from VS Code follow this [configuration example](https://stack
 
 #### Run tests
 
-From bash command line execute command below pointing to local environment:
+Command should execute tests on local environment:
 
 ```bash
-ENV_PATH=env/.env.local pytest
+pytest
 ```
 
-or for other environments
+or to target other environments:
 ```bash
 ENV_PATH=env/.env.development pytest
 ENV_PATH=env/.env.production pytest
 ```
 
 
-If get test errors `connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refuse` make sure that the database is running.
+If get test execution errors like `connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refuse` make sure that the database is running.
 ```bash
 sudo service postgresql status
 ```
