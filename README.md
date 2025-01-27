@@ -12,11 +12,11 @@ Given a list of stock operations within a portfolio account, API calculates the 
 If operations are in a currency different than GBP it converts the amounts to, as HMRC requires reporting in GBP.
 
 ## Future Improvements
-- Apply stocks splits to buy and sells when calculating profits.
-- Create deployment pipeline.
+- Apply stocks splits to buy and sells before calculating profits.
 - Add authorization.
 - Add logging
-- Add parameter to request to get account total details to specify in which currency the profits should be displayed.
+- Create deployment pipeline.
+- Add parameter to get account total details to specify in which currency the profits should be displayed.
 
 ## Usage (local)
 

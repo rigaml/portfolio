@@ -1,13 +1,18 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, TypedDict
 
 from profits.models import Account
 from profits.repositories.operation_repository import OperationRepository
 from profits.services.currency_service import CurrencyService
 from profits.services.profit_calculator import ProfitCalculator
-from profits.interfaces.dtos.profit_dto import ProfitDTO
+from profits.interfaces.dtos.profit_dto import ProfitExchangeDTO
 from profits.services.exceptions import ProfitServiceBuySellMissmatch
+
+
+class ProfitDetails(TypedDict):
+    ticker: str
+    profit_details: list[ProfitExchangeDTO]
 
 class ProfitService:
     def __init__(
@@ -37,8 +42,7 @@ class ProfitService:
 
         return amount_total
 
-    def get_total_details(self, account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> list[dict[str, str | ProfitDTO]]:
-        
+    def get_total_details(self, account: Account, date_start: Optional[datetime], date_end: Optional[datetime]) -> list[ProfitDetails]:        
         account_tickers_sold = self.operation_repository.get_account_tickers_sold_period(account, date_start, date_end)
         tickers_profit = []
         for ticker_sold in account_tickers_sold:
