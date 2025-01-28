@@ -1,4 +1,9 @@
-SELECT * 
-FROM profits_operation
-WHERE account_id = 4
-  AND ticker = 'PLTR'
+
+
+update profits_operation
+set quantity = 193
+where id = 1117  
+
+-- SELECT * 
+-- FROM profits_operation
+-- order BY id
