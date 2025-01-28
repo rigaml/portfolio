@@ -269,7 +269,7 @@ class TestAccountViewSet:
         data_row = csv_lines[1].split(',')
         data_row[last_column_index] = data_row[last_column_index].strip()  # removes '\r' if added at the end of the line
         assert data_row[0] == buy_operation.ticker
-        assert data_row[len(data_row) - 1] == f"{(sell_operation.amount_total - buy_operation.amount_total):.7f}"
+        assert data_row[len(data_row) - 1] == f"{(sell_operation.amount_total - buy_operation.amount_total):.13f}"
         
 
     def test_total_details_when_no_dates(
