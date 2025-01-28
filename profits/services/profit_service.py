@@ -9,6 +9,8 @@ from profits.services.profit_calculator import ProfitCalculator
 from profits.interfaces.dtos.profit_dto import ProfitExchangeDTO
 from profits.services.exceptions import ProfitServiceBuySellMissmatch
 
+import logging
+logger = logging.getLogger('profits.services')
 
 class ProfitDetails(TypedDict):
     ticker: str
@@ -36,6 +38,7 @@ class ProfitService:
             try:
                 ticker_profits = self.profit_calculator.calculate_ticker_profits(ticker_operations)
             except ValueError as e:
+                logger.exception(f'Error calculating profits for ticker {ticker_sold}')
                 raise ProfitServiceBuySellMissmatch(f'For ticker {ticker_sold} there is error: {e}') from e
             
             amount_total += sum(ticker_profit.profit_exchange for ticker_profit in ticker_profits)
@@ -54,6 +57,7 @@ class ProfitService:
             try:
                 ticker_profits = self.profit_calculator.calculate_ticker_profits(ticker_operations)
             except ValueError as e:
+                logger.exception(f'Error calculating profits for ticker {ticker_sold}')
                 raise ProfitServiceBuySellMissmatch(f'For ticker {ticker_sold} there is error: {e}') from e
 
             tickers_profit.append(

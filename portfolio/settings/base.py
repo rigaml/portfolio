@@ -28,10 +28,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    # core: shared functionality for different apps
-    'core',
-    # profits: stock profits calculation
-    'profits',
+    'core', # core: shared functionality for the different apps in this project
+    'profits', # profits app: stock profits management/calculation
 ]
 
 MIDDLEWARE = [
@@ -42,6 +40,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'middleware.exception_logging.ExceptionLoggingMiddleware', # Logging unhandled exceptions
 ]
 
 ## Uncomment for enable authentication for API request

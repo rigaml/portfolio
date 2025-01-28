@@ -4,9 +4,13 @@
 
 # Importing all the settings defined in base
 from .base import *
+from portfolio import logging_config
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+
+
+logging_config.LOGGING['handlers']['file']['filename'] = Path(BASE_DIR) / 'logs' / 'portfolio.log'
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-&!2a^)8p7i#5*422cvyo5$vwk91)_wy&ri&%+q23oe_^#m899p'
