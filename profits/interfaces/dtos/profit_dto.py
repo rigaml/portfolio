@@ -16,6 +16,7 @@ class ProfitDTO:
 
 @dataclass
 class ProfitExchangeDTO(ProfitDTO):
+    currency_exchange: str
     buy_exchange: Decimal
     buy_amount_total_exchange: Decimal
     sell_exchange: Decimal

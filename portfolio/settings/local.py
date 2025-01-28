@@ -4,7 +4,6 @@
 
 # Importing all the settings defined in base
 from .base import *
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -34,7 +33,7 @@ INSTALLED_APPS = ['debug_toolbar'] + INSTALLED_APPS
 MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
 INTERNAL_IPS = ['127.0.0.1']
 
-# Disable logging in local development
+# Logging in local development only to the console
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

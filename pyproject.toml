@@ -13,6 +13,8 @@ psycopg2-binary = "^2.9.10"
 drf-nested-routers = "^0.94.1"
 django-filter = "^24.3"
 python-dotenv = "^1.0.1"
+python-json-logger = "^3.2.1"
+watchtower = "^3.3.1"
 
 
 [tool.poetry.group.dev.dependencies]

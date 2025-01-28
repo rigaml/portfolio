@@ -16,6 +16,7 @@ class ProfitExchanger:
         
         profit_exchange_dto= ProfitExchangeDTO(
             **dataclasses.asdict(profit_dto),
+            currency_exchange=target_currency,
             buy_exchange= buy_exchange,
             buy_amount_total_exchange= buy_amount_total_exchange,
             sell_exchange= sell_exchange,

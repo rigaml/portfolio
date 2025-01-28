@@ -18,6 +18,8 @@ from profits.services.profit_exchanger import ProfitExchanger
 from profits.utils import datetime_utils, csv_utils
 from profits.services.profit_service import ProfitService
 
+import logging
+logger = logging.getLogger(__name__)
 
 class ProfitServiceFactory:
     def create(self, date_end):
@@ -48,6 +50,7 @@ class AccountViewSet(ModelViewSet):
         try:
             account = self.get_object()
         except Account.DoesNotExist:
+            logger.error(f"AccountId {pk} not found.")
             return None, None, None, Response({"error": "Account not found."}, status=404)
 
         # Parse dates
@@ -58,11 +61,13 @@ class AccountViewSet(ModelViewSet):
             date_start = datetime_utils.parse_flexible_date(date_start)
             date_end = datetime_utils.parse_flexible_date(date_end)
         except ValueError:
+            logger.exception(f"Invalid date format `{date_start}` or `{date_end}`.")
             return None, None, None, Response({"error": f"Invalid date format `{date_start}` or `{date_end}`."}, status=400)
 
         try:
             profit_service = self.profit_service_factory.create(date_end)
         except Exception as e:
+            logger.exception("Error initializing profit service.")
             return None, None, None, Response({"error": "Error initializing profit service."}, status=400)
 
         return account, date_start, date_end, profit_service
@@ -70,6 +75,7 @@ class AccountViewSet(ModelViewSet):
     def destroy(self, request, pk):
         account= get_object_or_404(Account, pk=pk)
         if account.operation_set.exists():   # type: ignore
+            logger.error(f"AccountId {pk} cannot be deleted because record is associated with another table")
             return Response(
                 {'error': 'Account cannot be deleted because record is associated with another table'}, 
                 status=status.HTTP_400_BAD_REQUEST)
@@ -95,7 +101,8 @@ class AccountViewSet(ModelViewSet):
         try:
             profit_total = profit_service_or_response.get_total(account, date_start, date_end)
         except Exception:
-            return Response({"error": f"There was an error calculating total amount for account {account} between dates `{date_start}` or `{date_end}`."}, status=400)
+            logger.exception("Error calculating total amount for accountId {pk} between dates `{date_start}` or `{date_end}`.")
+            return Response({"error": f"Error calculating total amount for accountId {pk} between dates `{date_start}` or `{date_end}`."}, status=400)
 
         params = {
             'id': account.id,
@@ -123,6 +130,7 @@ class AccountViewSet(ModelViewSet):
         try:
             tickers_profit = profit_service_or_response.get_total_details(account, date_start, date_end)
         except Exception:
-            return Response({"error": f"There was an error calculating total details for account {account} between dates `{date_start}` or `{date_end}`."}, status=400)
+            logger.exception("Error calculating total amount for accountId {pk} between dates `{date_start}` or `{date_end}`.")
+            return Response({"error": f"Error calculating total details for account {account} between dates `{date_start}` or `{date_end}`."}, status=400)
 
         return csv_utils.generate_total_details_csv(tickers_profit, account.id, date_start, date_end)

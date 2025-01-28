@@ -101,7 +101,7 @@ class CurrencyExchangeViewSet(ReadOnlyModelViewSet):
 
         if not all([origin_code, target_code]):
             return Response({
-                'error': '`origin` and `target` currencies are required querystrings'
+                'error': f'`origin` and `target` currencies are required querystrings origin_code={origin_code}, target_code={target_code}'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         origin = get_object_or_404(Currency, iso_code=origin_code)
