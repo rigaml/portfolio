@@ -1,7 +1,10 @@
+from decimal import Decimal
 from django.db import models
 from django.core.exceptions import ValidationError
 
 from django.conf import settings
+
+from profits.interfaces.dtos.operation_dto import OperationDTO
 
 class Broker(models.Model):
     name = models.CharField(max_length=10, unique=True)
@@ -116,5 +119,14 @@ class Operation(models.Model):
 
     class Meta:
         unique_together = ('account', 'date', 'ticker')
+
+    def to_dto(self) -> OperationDTO:
+        return OperationDTO(
+            type=self.type,
+            date=self.date,
+            quantity=self.quantity,
+            currency=self.currency.iso_code,
+            price_avg=self.amount_total / self.quantity if self.quantity != 0 else Decimal('0')
+        )        
 
 

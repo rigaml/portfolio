@@ -181,11 +181,11 @@ def create_operation(
     date_default, 
     account_default, 
     currency_gbp,
-    type= 'SELL',
+    type= 'BUY',
     ticker= 'AAPL',
-    quantity= Decimal('10'), 
-    amount_total= Decimal('10000.00'),
-    exchange= Decimal('1.0')) -> Callable:
+    quantity= Decimal(10), 
+    amount_total= Decimal(10000),
+    exchange= Decimal(1)) -> Callable:
     def _create_operation(**kwargs) -> Operation:
         defaults = {
             'account': account_default,

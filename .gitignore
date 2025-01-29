@@ -2,6 +2,7 @@
 portfolio.sqlite3
 portfolio.sqlite3-journal
 profits/data/upload/*
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -6,10 +6,10 @@ from django.utils.dateparse import parse_datetime, parse_date
 from django.utils.timezone import make_aware, is_aware
 
 
-def to_filename(dt: datetime | None) -> str:
+def to_filename(dt: Optional[datetime]) -> str:
     if dt is None:
         return ""
-    return dt.strftime("%Y-%m%d-%H-00")
+    return dt.strftime("%Y-%m-%d-%H-00")
 
 def to_datetime_tz_aware(value: str, format: str = "%Y-%m-%d %H:%M:%S") -> datetime:
     naive_date = datetime.strptime(value, format)

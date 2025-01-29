@@ -1,17 +1,36 @@
-## Upload currency exchanges
-curl -X POST 127.0.0.1:8000/profits/currency-exchange/upload/ \
-    -F "file=@profits/data/upload/bankofengland-gbp-usd.csv" \
+
+## Currency Exchanges: Delete GBP to USD
+curl -X DELETE "http://127.0.0.1:8000/profits/currency-exchange/bulk_delete/?origin=GBP&target=USD"
+
+## Currency Exchanges: Delete GBP to EUR
+curl -X DELETE "http://127.0.0.1:8000/profits/currency-exchange/bulk_delete/?origin=GBP&target=EUR"
+
+## Currency Exchanges: Upload GBP to USD
+curl -X POST "http://127.0.0.1:8000/profits/currency-exchange/upload/" \
+    -F "file=@profits/data/upload/bankofengland-gbp-usd-to-2025.csv" \
     -F "origin=GBP" \
     -F "target=USD"
 
+## Currency Exchanges: Upload GBP to EUR
+curl -X POST "http://127.0.0.1:8000/profits/currency-exchange/upload/" \
+    -F "file=@profits/data/upload/bankofengland-gbp-eur-to-2025.csv" \
+    -F "origin=GBP" \
+    -F "target=EUR"
+
 ## Upload Splits
-curl -X POST 127.0.0.1:8000/profits/split/upload/ \
+curl -X POST "http://127.0.0.1:8000/profits/split/upload/" \
     -F "file=@profits/data/upload/tax_splits.csv"
 
-## Upload operations
-curl -X POST 127.0.0.1:8000/profits/operation/upload/ \
-    -F "account_id=1" \
-    -F "file=@profits/data/upload/stock-operations-II.csv"
+## Operations: Delete all operations account_id
+curl -X DELETE "http://127.0.0.1:8000/profits/operation/bulk_delete/?account_id=1"
 
-## Delete all operations
-curl -X DELETE 127.0.0.1:8000/profits/operation/bulk_delete/?account_id=1
+## Operations: Upload 
+curl -X POST "http://127.0.0.1:8000/profits/operation/upload/" \
+    -F "account_id=4" \
+    -F "file=@profits/data/upload/program-input-stock-operations-II-2023-24.csv"
+
+## Account: profits total for account
+curl -X GET http://127.0.0.1:8000/profits/account/4/total?date_start=2023-04-06&date_end=2024-04-05
+
+## Account: profits details for account
+curl -X GET http://127.0.0.1:8000/profits/account/4/total-details?date_start=2023-04-06&date_end=2024-04-05

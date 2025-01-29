@@ -13,6 +13,7 @@ from profits.models import Account
 @pytest.mark.django_db
 class TestAccountViewSet:
 
+    # TODO: Add authentication tests
     # At the moment DRF is not configured for authentication in setting.py (uncomment `REST_FRAMEWORK` section for this)
     # def test_unauthorized_access(self, api_client: APIClient, account: Account):
     #     url = reverse('account-list')
@@ -122,6 +123,7 @@ class TestAccountViewSet:
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
     @pytest.mark.parametrize("invalid_field",
                             [("date_start"),
                              ("date_end"),
@@ -155,9 +157,9 @@ class TestAccountViewSet:
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['id'] == account_default.id
-        assert response.data['amount_total'] == Decimal(10000)
         assert response.data['date_start'] == make_aware(datetime.fromisoformat(params['date_start']))
         assert response.data['date_end'] == make_aware(datetime.fromisoformat(params['date_end']))
+        assert response.data['profit_total'] == Decimal(0)
 
 
     def test_total_when_no_dates(self, authenticated_client, account_default, operation_default):
@@ -166,9 +168,9 @@ class TestAccountViewSet:
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['id'] == account_default.id
-        assert response.data['amount_total'] == Decimal(10000)
         assert response.data['date_start'] is None
         assert response.data['date_end'] is None
+        assert response.data['profit_total'] == Decimal(0)
 
     def test_total_details_account_when_not_found_returns_404(self, authenticated_client):
         url = reverse('account-total-details', args=[99999])
@@ -198,31 +200,55 @@ class TestAccountViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
 
-    def test_total_details_when_valid_parameters(self, authenticated_client, account_default, mocker):
+    def test_total_details_when_valid_parameters(
+            self, 
+            authenticated_client, 
+            account_default, 
+            create_operation,
+            create_date,
+            currency_usd,
+            currency_gbp,
+            create_currency_exchange):
+        
         url = reverse('account-total-details', args=[account_default.id])
         params = {
             'date_start': '2021-01-01T00:00:00',
             'date_end': '2025-12-31T23:59:59'
         }
 
-        mock_total_details = [{
-                'ticker': 'AAPL',
-                'profit_detail': [{
-                    'sell_date': '2023-06-01',
-                    'sell_quantity': 100,
-                    'sell_amount_total': 15000,
-                    'sell_currency': 'USD',
-                    'buy_date': '2023-01-15',
-                    'buy_amount_total': 10000,
-                    'buy_currency': 'USD',
-                    'profit': 5000
-                }]
-        }]
+        buy_operation = create_operation(
+            account=account_default,
+            type='BUY',
+            date=create_date('2023-01-15'),
+            ticker='AAPL',
+            quantity=Decimal('100'),
+            currency=currency_usd,
+            amount_total=Decimal('10000'),
+            exchange=Decimal('1.0')
+        )
 
-        mocker.patch('profits.views.account_view.get_total_details', return_value=mock_total_details)
+        # Creates the exchange for the BUY
+        create_currency_exchange(date=create_date('2023-01-15'), origin=currency_usd, target=currency_gbp, rate=Decimal('1.0'))
+        
+        sell_operation = create_operation(
+            account=account_default,
+            type='SELL',
+            date=create_date('2023-06-01'),
+            ticker='AAPL',
+            quantity=Decimal('100'),
+            currency=currency_usd,
+            amount_total=Decimal('15000'),
+            exchange=Decimal('1.0')
+        )
+
+        # Creates the exchange for the SELL
+        create_currency_exchange(date=create_date('2023-06-01'), origin=currency_usd, target=currency_gbp, rate=Decimal('1.0'))
 
         response = authenticated_client.get(url, params)
         
+        # print("Response content:", response.content.decode('utf-8'))
+        # print("Response JSON:", response.json())
+
         assert response.status_code == status.HTTP_200_OK
         assert response['Content-Type'] == 'text/csv'
         assert 'attachment; filename=' in response['Content-Disposition']
@@ -242,27 +268,48 @@ class TestAccountViewSet:
         # Verify data
         data_row = csv_lines[1].split(',')
         data_row[last_column_index] = data_row[last_column_index].strip()  # removes '\r' if added at the end of the line
-        assert data_row[0] == mock_total_details[0]['ticker']
-        assert data_row[len(data_row) - 1] == str(mock_total_details[0]['profit_detail'][0]['profit'])
+        assert data_row[0] == buy_operation.ticker
+        assert data_row[len(data_row) - 1] == f"{(sell_operation.amount_total - buy_operation.amount_total):.13f}"
         
 
-    def test_total_details_when_no_dates(self, authenticated_client, account_default, mocker):
+    def test_total_details_when_no_dates(
+            self, 
+            authenticated_client, 
+            account_default, 
+            create_operation,
+            create_date,
+            currency_usd,
+            currency_gbp,
+            create_currency_exchange):          
+
         url = reverse('account-total-details', args=[account_default.id])
 
-        mock_total_details = [{
-                'ticker': 'AAPL',
-                'profit_detail': [{
-                    'sell_date': '2023-06-01',
-                    'sell_quantity': 100,
-                    'sell_amount_total': 15000,
-                    'sell_currency': 'USD',
-                    'buy_date': '2023-01-15',
-                    'buy_amount_total': 10000,
-                    'buy_currency': 'USD',
-                    'profit': 5000
-                }]
-        }]
-        mocker.patch('profits.views.account_view.get_total_details', return_value=mock_total_details)      
+        buy_operation = create_operation(
+            account=account_default,
+            type='BUY',
+            date=create_date('2023-01-15'),
+            ticker='AAPL',
+            quantity=Decimal('100'),
+            currency=currency_usd,
+            amount_total=Decimal('10000'),
+            exchange=Decimal('1.0')
+        )
+
+        create_currency_exchange(date=create_date('2023-01-15'), origin=currency_usd, target=currency_gbp, rate=Decimal('1.0'))
+        
+        sell_operation = create_operation(
+            account=account_default,
+            type='SELL',
+            date=create_date('2023-06-01'),
+            ticker='AAPL',
+            quantity=Decimal('100'),
+            currency=currency_usd,
+            amount_total=Decimal('15000'),
+            exchange=Decimal('1.0')
+        )    
+
+        # Creates the exchange for the SELL
+        create_currency_exchange(date=create_date('2023-06-01'), origin=currency_usd, target=currency_gbp, rate=Decimal('1.0'))
 
         response = authenticated_client.get(url)
         
