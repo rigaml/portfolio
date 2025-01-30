@@ -3,9 +3,9 @@
 #
 import os
 from .base import *
-from portfolio import logging_config
+from portfolio.logging_config import LOGGING
 
-logging_config.LOGGING['handlers']['file']['filename'] = Path(BASE_DIR) / 'logs' / 'portfolio.log'
+LOGGING['handlers']['file']['filename'] = Path(BASE_DIR) / 'logs' / 'portfolio.log'
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key')
 DEBUG = True

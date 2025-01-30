@@ -5,6 +5,7 @@ import os
 
 # Importing all the settings defined in base
 from .base import *
+from portfolio.logging_config import LOGGING # type: ignore[unused-import]
 
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 DEBUG = False
