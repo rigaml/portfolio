@@ -129,11 +129,25 @@ In the `terraform` folder, execute command below to initialize the plugins for t
 ```bash
 terraform init
 ```
-List changes are going be applied to the infrastructure
+Reviews the Terraform files and shows changes going to be applied to the infrastructure
 ```bash
 terraform plan
 ```
 
+Before applying the plan need to set AWS credentials with (specify `--profile` option if have multiple AWS accounts. Ex. dev/stage/prod)
+```bash
+aws configure --profile <your-terraform-user>
+```
+
+Then you can create the resources in AWS
+```bash
+terraform apply
+```
+
+Remember to destroy the resources when not needed so don't incur unnecessary costs
+```bash
+terraform destroy
+```
 
 ## Contributing
 

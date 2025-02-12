@@ -1,35 +1,67 @@
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "5.84.0"
+    }
+  }
+}
+
 provider "aws" {
   region = var.region
 }
 
-# Fetch available AZs dynamically for the specified region
-data "aws_availability_zones" "available" {}
+# Defines the Amazon Machine Image to use
+data "aws_ami" "debian" {
+  most_recent = true  
+  owners      = var.ami_owners
 
-# VPC and Network Configuration
-module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
-  
-  name = "portfolio-vpc"
-  cidr = "10.0.0.0/16"
-  
-  azs             = [data.aws_availability_zones.available.names[0]]  # Proof of concept - only one AZ
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
-  
-  enable_nat_gateway = true
-  single_nat_gateway = true  # Proof of concept - cost saving
+  filter {
+    name   = "name"
+    values = [var.ami_name]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 }
 
-# EC2 Instance for PostgreSQL
+# VPC Configuration
+resource "aws_vpc" "main" {
+  cidr_block       = "10.0.0.0/16"
+  instance_tenancy = "default"
+
+  tags = {
+    Name = "main"
+  }
+}
+
+# Public Subnet for the API
+resource "aws_subnet" "public_api" {
+  cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 4, 1)
+  vpc_id            = aws_vpc.main.id   # Associates the subnet with the VPC.
+  availability_zone = "${var.region}a"  # Specifies the AWS availability zone - Proof of concept cost saving only one zone
+}
+
+# Private Subnet for Database
+resource "aws_subnet" "private_db" {
+  cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 4, 2)
+  vpc_id            = aws_vpc.main.id
+  availability_zone = "${var.region}a" # Specifies the AWS availability zone - Proof of concept cost saving only one zone
+}
+
+# EC2 Instance for PostgreSQL Database (instead of RDS using an EC2 instance as it is cheaper)
 resource "aws_instance" "db" {
-  ami           = "ami-04b4f1a9cf54c11d0"  # Ubuntu 24.04 ("DeprecationTime": "2027-01-15T09:17:20.000Z")
+  ami           = data.aws_ami.debian.id
   instance_type = var.instance_type
   
-  subnet_id     = module.vpc.private_subnets[0]
+  subnet_id     = aws_subnet.private_db.id
   vpc_security_group_ids = [aws_security_group.db.id]
   
   root_block_device {
-    volume_size = 20
+    volume_size = 20   # Size of the storage volume in GB
+    encrypted   = true  # Enable encryption for the root volume (will use the default KMS key)
   }
   
   tags = {
@@ -37,23 +69,49 @@ resource "aws_instance" "db" {
   }
 }
 
+# Creates the Elastic Container Registry (ECR) repository.
+resource "aws_ecr_repository" "app" {
+  name = "portfolio-app"
+}
+
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = "portfolio-cluster"
 }
 
-# ECS Task Definition
+# Add an Internet Gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+# Create a public route table
+resource "aws_route_table" "public_api" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+# Associate public subnet with the route table
+resource "aws_route_table_association" "public_api" {
+  subnet_id      = aws_subnet.public_api.id
+  route_table_id = aws_route_table.public_api.id
+}
+
+# ECS Task Definition: runs the Docker container for the application
 resource "aws_ecs_task_definition" "app" {
-  family                   = "portfolio-app"
+  family                  = "portfolio-app"
   network_mode            = "awsvpc"
-  requires_compatibilities = ["EC2"]
+  requires_compatibilities= ["EC2"]  # Specifies application will run on EC2
   cpu                     = "256"
   memory                  = "512"
   
   container_definitions = jsonencode([
     {
       name      = "portfolio-app"
-      image     = "${aws_ecr_repository.app.repository_url}:latest"
+      image     = "${aws_ecr_repository.app.repository_url}:latest"  # Pulls the latest image for the application from ECR - images created during GitHub CI/CD
       essential = true
       portMappings = [
         {
@@ -68,9 +126,19 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name  = "DB_HOST"
-          value = aws_instance.db.private_ip
+          value = aws_instance.db.private_ip   # Uses the private IP address of the EC2 instance to connect to the database
         }
       ]
+
+      # Specifies the logging configuration
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.portfolio.name
+          "awslogs-region"        = var.region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }      
     }
   ])
 }
@@ -83,7 +151,7 @@ resource "aws_ecs_service" "app" {
   desired_count   = 1  # Low instance count for cost saving
   
   network_configuration {
-    subnets         = module.vpc.private_subnets
+    subnets         = [aws_subnet.public_api.id]
     security_groups = [aws_security_group.app.id]
   }
 }

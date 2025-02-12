@@ -1,8 +1,10 @@
+# Security Group: defines the rules for inbound/outbound traffic
+
 # Security Group for Database
 resource "aws_security_group" "db" {
   name        = "portfolio-db-sg"
   description = "Security group for PostgreSQL database"
-  vpc_id      = module.vpc.vpc_id
+  vpc_id      = aws_vpc.main.id
 
   ingress {
     from_port       = 5432
@@ -16,7 +18,7 @@ resource "aws_security_group" "db" {
 resource "aws_security_group" "app" {
   name        = "portfolio-app-sg"
   description = "Security group for application"
-  vpc_id      = module.vpc.vpc_id
+  vpc_id      = aws_vpc.main.id
 
   ingress {
     from_port   = 8000

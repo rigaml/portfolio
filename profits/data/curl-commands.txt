@@ -1,3 +1,7 @@
+#### Common CURL commands for local testing
+
+## Health endpoint
+curl -i http://127.0.0.1:8000/profits/health/?format=json
 
 ## Currency Exchanges: Delete GBP to USD
 curl -X DELETE "http://127.0.0.1:8000/profits/currency-exchange/bulk_delete/?origin=GBP&target=USD"

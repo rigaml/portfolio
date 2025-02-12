@@ -39,7 +39,7 @@ CACHES = {
     }
 }
 
-# Rate limiting
+# Limiting the number of requestss allowed.
 REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',

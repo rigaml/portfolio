@@ -4,6 +4,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 # Tells Python to flush the stdout and stderr streams after each write. (latest messages will be in the logs for debugging)
 ENV PYTHONUNBUFFERED 1
+# Set to use production environment
+ENV ENV_PATH=env/.env.production
 
 # Set work directory
 WORKDIR /app
@@ -18,6 +20,9 @@ RUN pip install poetry
 
 # Copy poetry dependencies
 COPY pyproject.toml poetry.lock ./
+
+# Create log directory in location defined in `portfolio/logging_config.py`
+RUN mkdir -p /var/log/django && chmod 777 /var/log/django
 
 # Configure poetry to not create virtual environment as in the container no need to create virtual environment.s
 RUN poetry config virtualenvs.create false

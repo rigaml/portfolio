@@ -1,7 +1,7 @@
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "portfolio" {
   name              = "/ecs/portfolio"
-  retention_in_days = 3  # Low 'retention_in_days' for cost saving
+  retention_in_days = 1  # Low 'retention_in_days' for cost saving
 }
 
 # IAM role for ECS tasks to write logs
