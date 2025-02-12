@@ -103,6 +103,52 @@ If get test execution errors like `connection to server at "localhost" (127.0.0.
 sudo service postgresql status
 ```
 
+## CI/CD 
+### Installing AWS CLI (WSL2 Ubuntu)
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt update && sudo apt install unzip -y
+unzip awscliv2.zip
+sudo ./aws/install
+```
+
+Verify that installed correctly
+```bash
+aws --version
+```
+
+### Installing Terraform
+Follow the instructions in [Terraform website](https://developer.hashicorp.com/terraform/install)
+
+Verify that installed correctly
+```bash
+terraform -v
+```
+
+In the `terraform` folder, execute command below to initialize the plugins for the provider (in this case AWS)
+```bash
+terraform init
+```
+Reviews the Terraform files and shows changes going to be applied to the infrastructure
+```bash
+terraform plan
+```
+
+Before applying the plan need to set AWS credentials with (specify `--profile` option if have multiple AWS accounts. Ex. dev/stage/prod)
+```bash
+aws configure --profile <your-terraform-user>
+```
+
+Then you can create the resources in AWS
+```bash
+terraform apply
+```
+
+Remember to destroy the resources when not needed so don't incur unnecessary costs
+```bash
+terraform destroy
+```
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

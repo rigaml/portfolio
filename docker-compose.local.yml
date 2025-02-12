@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - env/.env.local
+    depends_on:
+      - db
+    command: poetry run python manage.py runserver 0.0.0.0:8000
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=portfoliodb
+      - POSTGRES_USER=portfoliouser
+      - POSTGRES_PASSWORD=dummypassword
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+
+volumes:
+  postgres_data_local:

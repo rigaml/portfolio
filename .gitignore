@@ -3,6 +3,8 @@ portfolio.sqlite3
 portfolio.sqlite3-journal
 profits/data/upload/*
 logs/
+# Terraform cache can be ignored
+.terraform/  
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -5,6 +5,7 @@ import os
 
 # Importing all the settings defined in base
 from .base import *
+from portfolio.logging_config import LOGGING # type: ignore[unused-import]
 
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 DEBUG = False
@@ -38,7 +39,7 @@ CACHES = {
     }
 }
 
-# Rate limiting
+# Limiting the number of requestss allowed.
 REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',

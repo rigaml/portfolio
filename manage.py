@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os
-from pathlib import Path
 import sys
 from dotenv import load_dotenv
 
 def main():
-    project_root = Path(__file__).resolve().parent
-    env_path = os.getenv('ENV_PATH', project_root / 'env/.env.local')
+    env_path = os.getenv('ENV_PATH', 'env/.env.local')
     load_dotenv(env_path)
     
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portfolio.settings')
