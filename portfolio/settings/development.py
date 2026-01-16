@@ -10,7 +10,7 @@ LOGGING['handlers']['file']['filename'] = Path(BASE_DIR) / 'logs' / 'portfolio.l
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key')
 DEBUG = True
 
-ALLOWED_HOSTS = ['dev-api.rigaml-change-aws.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['dev-api.GET-FROM-AWS.com', 'localhost', '127.0.0.1']
 
 DATABASES = {
     'default': {

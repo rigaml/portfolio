@@ -5,13 +5,21 @@ terraform {
       version = "5.84.0"
     }
   }
+
+  # Stores Terraform state in a remote S3 bucket so can be shared with other team members.
+  backend "s3" {
+    bucket         = "my-terraform-state-bucket"
+    key            = "prod/terraform.tfstate"
+    region         = "us-east-1"     # need to hardcode the region as variable with region is not available during backend configuration
+    dynamodb_table = "terraform-lock-table"
+  }  
 }
 
 provider "aws" {
   region = var.region
 }
 
-# Defines the Amazon Machine Image to use
+# Selects AMI (Amazon Machine Image) used for the instance running the database
 data "aws_ami" "debian" {
   most_recent = true  
   owners      = var.ami_owners
@@ -24,6 +32,17 @@ data "aws_ami" "debian" {
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
+  }
+}
+
+# Selects AMI used for containers: special instance tailored to run ECS Tasks (contains ECS agent, Docker...)
+data "aws_ami" "ecs_optimized" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-ecs-*"]
   }
 }
 
@@ -59,6 +78,17 @@ resource "aws_instance" "db" {
   subnet_id     = aws_subnet.private_db.id
   vpc_security_group_ids = [aws_security_group.db.id]
   
+  user_data = <<-EOF
+        #!/bin/bash
+        sudo apt-get update
+        sudo apt-get install -y postgresql postgresql-contrib
+        sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /etc/postgresql/*/main/postgresql.conf
+        echo "host all all 10.0.0.0/16 md5" | sudo tee -a /etc/postgresql/*/main/pg_hba.conf
+        sudo systemctl start postgresql
+        sudo -u postgres psql -c "CREATE USER ${var.db_user} WITH PASSWORD '${var.db_password}';"
+        sudo -u postgres psql -c "CREATE DATABASE ${var.db_name} OWNER ${var.db_user};"
+        EOF
+
   root_block_device {
     volume_size = 20   # Size of the storage volume in GB
     encrypted   = true  # Enable encryption for the root volume (will use the default KMS key)
@@ -69,12 +99,30 @@ resource "aws_instance" "db" {
   }
 }
 
+# EC2 instances for ECS cluster
+resource "aws_instance" "ecs_instance" {
+  ami           = data.aws_ami.ecs_optimized.id
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.public_api.id
+
+  iam_instance_profile = aws_iam_instance_profile.ecs.name
+
+  user_data = <<-EOF
+    #!/bin/bash
+    echo "ECS_CLUSTER=${aws_ecs_cluster.main.name}" >> /etc/ecs/ecs.config
+  EOF
+
+  tags = {
+    Name = "ecs-instance"
+  }
+}
+
 # Creates the Elastic Container Registry (ECR) repository.
 resource "aws_ecr_repository" "app" {
   name = "portfolio-app"
 }
 
-# ECS Cluster
+# ECS Cluster: container logical grouping
 resource "aws_ecs_cluster" "main" {
   name = "portfolio-cluster"
 }
@@ -107,7 +155,10 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities= ["EC2"]  # Specifies application will run on EC2
   cpu                     = "256"
   memory                  = "512"
-  
+
+  # Set role to allow ECS to write to CloudWatch
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+
   container_definitions = jsonencode([
     {
       name      = "portfolio-app"
@@ -122,11 +173,27 @@ resource "aws_ecs_task_definition" "app" {
       environment = [
         {
           name  = "DJANGO_SETTINGS_MODULE"
-          value = "portfolio.settings_prod"
+          value = "portfolio.settings_prod" 
         },
         {
           name  = "DB_HOST"
           value = aws_instance.db.private_ip   # Uses the private IP address of the EC2 instance to connect to the database
+        },
+        { 
+          name = "DB_NAME", 
+          value = var.db_name 
+        },
+        { 
+          name = "DB_USER", 
+          value = var.db_user 
+        },
+        { 
+          name = "DB_PASSWORD", 
+          value = var.db_password 
+        },
+        { 
+          name = "DB_PORT", 
+          value = "5432" 
         }
       ]
 
@@ -149,9 +216,11 @@ resource "aws_ecs_service" "app" {
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = 1  # Low instance count for cost saving
+  launch_type     = "EC2"  # Running without ALB for cost saving
   
   network_configuration {
-    subnets         = [aws_subnet.public_api.id]
-    security_groups = [aws_security_group.app.id]
+    subnets          = [aws_subnet.public_api.id]
+    security_groups  = [aws_security_group.app.id]
+    assign_public_ip = true  
   }
 }

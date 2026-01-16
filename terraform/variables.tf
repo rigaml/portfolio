@@ -11,13 +11,33 @@ variable "instance_type" {
 }
 
 variable "ami_name" {
-  description = "The name of the AMI to use for the VM, default is the latest Debian 11 AMI"
+  description = "The name of the AMI to use for the VM: latest Debian 11 AMI"
 
   default = "debian-11-amd64-*"
 }
 
 variable "ami_owners" {
-  description = "The owners of the AMI to use for the VM, default is the official Debian AMI"
+  description = "The name of the AMI to use for the VM: Debian AMIs provided by AWS"
+  default = ["136693071363"]
+}
 
-  default = ["136693071363"]   #Amazon owner
+variable "db_name" {
+  description = "Postgres database name"
+  default = "portfolio"
+}
+
+variable "db_user" {
+  description = "Postgres database user"
+  default = "portfolio_user"
+}
+
+variable "db_password" {
+  description = "Postgres database password"
+  sensitive = true
+}
+
+### TODO: Set value!
+variable "django_secret_key" { 
+  description = "Django secret key"
+  sensitive = true 
 }

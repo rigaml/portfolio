@@ -19,9 +19,9 @@ jobs:
         ports:
           - "5432:5432"
         env:
+          POSTGRES_DB: portfoliodb
           POSTGRES_USER: portfoliouser
           POSTGRES_PASSWORD: dummypassword
-          POSTGRES_DB: portfoliodb
 
     steps:
     - uses: actions/checkout@v4
@@ -63,6 +63,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
+        # Set environment variables used to deploy to AWS with values stored in GitHub secrets (Go to Repo Settings -> Secrets and variables -> Actions)
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
@@ -71,17 +72,48 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
+    # Set common values used by subsequent steps
+    - name: Set image details
+      id: image-details
+      run: |
+        echo "registry=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_OUTPUT
+        echo "repository=portfolio-app" >> $GITHUB_OUTPUT
+        echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+        cd terraform
+        DB_HOST=$(terraform output -raw db_host)
+        echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
+
     - name: Build and push Docker image
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: portfolio-app
-        IMAGE_TAG: ${{ github.sha }}
+        DB_HOST: ${{ steps.image-details.outputs.db_host }}
+        DB_NAME: ${{ secrets.DB_NAME }}      
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ECR_REGISTRY: ${{ steps.image-details.outputs.registry }}
+        ECR_REPOSITORY: ${{ steps.image-details.outputs.repository }}
+        IMAGE_TAG: ${{ steps.image-details.outputs.image_tag }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG  
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-    - name: Update ECS service
+    # Apply Django database migrations
+    - name: Run Database Migrations
+      env:
+        ECR_REGISTRY: ${{ steps.image-details.outputs.registry }}
+        ECR_REPOSITORY: ${{ steps.image-details.outputs.repository }}
+        IMAGE_TAG: ${{ steps.image-details.outputs.image_tag }}  
+      run: |
+        docker run --rm \
+          -e DJANGO_SETTINGS_MODULE=portfolio.settings_prod \
+          -e DB_HOST=${{ steps.image-details.outputs.db_host }} \
+          -e DB_NAME=${{ secrets.DB_NAME }} \
+          -e DB_USER=${{ secrets.DB_USER }} \
+          -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+          $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+          python manage.py migrate
+
+    - name: Update ECS service with the new container image 
       run: |
         aws ecs update-service --cluster portfolio-cluster --service portfolio-service --force-new-deployment

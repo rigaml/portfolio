@@ -1,0 +1,16 @@
+#Template to deploy with Production settings
+# Update with your own details and copy to "env" folder a file with your production values
+# before deploying API upload these as base64 to GitHub repo secrets
+#   cat .env.production | base64
+DJANGO_SETTINGS_MODULE=portfolio.settings.production
+DJANGO_SECRET_KEY=your-production-secret-key
+ALLOWED_HOSTS=prod-api.GET-FROM-AWS.com
+DB_NAME=your-db-name
+DB_USER=your-db-user
+DB_PASSWORD=your-db-password
+DB_HOST=your-db-host
+DB_PORT=5432
+REDIS_URL=redis:/your-aws-aws-redis-host:6379/1
+# Used in logging_config.py for watchtower.CloudWatchLogHandler
+AWS_ACCESS_KEY_ID = your-aws-key-id-accessKey
+AWS_SECRET_ACCESS_KEY = your-aws-secret-key-SecretAccessKey

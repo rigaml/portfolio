@@ -10,7 +10,7 @@ from portfolio.logging_config import LOGGING # type: ignore[unused-import]
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 DEBUG = False
 
-ALLOWED_HOSTS = [os.environ.get('ALLOWED_HOSTS', '').split(',')]
+ALLOWED_HOSTS = ['*'] # For proof of concept only; in real API should specify a defined value
 
 DATABASES = {
     'default': {
@@ -24,7 +24,7 @@ DATABASES = {
 }
 
 # Security settings
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False   # TODO: Set to `True` for real application. For proof of concept not using load balancer or SSL termination
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 31536000

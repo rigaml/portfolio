@@ -103,8 +103,13 @@ If get test execution errors like `connection to server at "localhost" (127.0.0.
 sudo service postgresql status
 ```
 
-## CI/CD 
-### Installing AWS CLI (WSL2 Ubuntu)
+## CI/CD
+
+### Creating AWS resources
+Creating the resources could be done during the deployment but for simplicity doing it manually.
+
+#### Installing AWS CLI (WSL2 Ubuntu)
+Install AWS CLI following instructions in [AWS website](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 ```bash
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 sudo apt update && sudo apt install unzip -y
@@ -117,14 +122,14 @@ Verify that installed correctly
 aws --version
 ```
 
-### Installing Terraform
-Follow the instructions in [Terraform website](https://developer.hashicorp.com/terraform/install)
+#### Terraform
+Install Terraform following instructions in [Terraform website](https://developer.hashicorp.com/terraform/install)
 
 Verify that installed correctly
 ```bash
 terraform -v
 ```
-
+#### Create AWS resources with Terraform
 In the `terraform` folder, execute command below to initialize the plugins for the provider (in this case AWS)
 ```bash
 terraform init
@@ -134,20 +139,42 @@ Reviews the Terraform files and shows changes going to be applied to the infrast
 terraform plan
 ```
 
-Before applying the plan need to set AWS credentials with (specify `--profile` option if have multiple AWS accounts. Ex. dev/stage/prod)
+Before applying the plan need to set AWS credentials (specify `--profile` option if have multiple AWS accounts. Ex. dev/stage/prod)
 ```bash
-aws configure --profile <your-terraform-user>
+aws configure --profile <aws-profile>
 ```
 
-Then you can create the resources in AWS
+Set environment settings Terraform is going to use to create resources
+```bash
+export TF_VAR_db_name="portfolio_prod"
+export TF_VAR_db_user="portfolio_user"
+export TF_VAR_db_password="your_secure_password"  # Replace with your password
+```
+
+Apply for Terraform to create the resources in AWS
 ```bash
 terraform apply
 ```
 
-Remember to destroy the resources when not needed so don't incur unnecessary costs
+Remember to destroy the resources when not needed so don't incur unnecessary costs.
 ```bash
 terraform destroy
 ```
+
+### Deploymnet
+Using [GitHub Actions](https://github.com/rigaml/portfolio/actions) for automating the deploys.
+
+- `test.yml`: Tests are run when pushing to any branch.
+- `deploy.yml`: Deploy to AWS after project is build, tests pass and user manually approves deploy in GitHub.
+
+To successfully run the deploy should define the below Environment secrets in repo [Settings](https://github.com/rigaml/portfolio/settings/secrets/actions) for the environment specified in `deploy.yml` -> `deploy` -> `environment: production`
+
+`AWS_ACCESS_KEY_ID`
+`AWS_SECRET_ACCESS_KEY`
+`DB_NAME`
+`DB_USER`
+`DB_PASSWORD`
+`DJANGO_SECRET_KEY`
 
 ## Contributing
 
